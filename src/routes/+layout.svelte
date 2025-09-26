@@ -16,7 +16,6 @@
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="apple-mobile-web-app-title" content="Смотрелка" />
-	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#6e11b0" />
 	<meta name="msapplication-TileColor" content="#6e11b0" />
 </svelte:head>
 

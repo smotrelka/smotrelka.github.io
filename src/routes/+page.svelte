@@ -76,7 +76,7 @@
 					{#each [1, 2, 3, 4, 5] as i}
 						<article class="space-y-2 text-sm">
 							<div class="relative pt-[150%] w-full">
-								<a class="absolute inset-0 z-10" href="##" aria-label="Title"></a>
+								<a class="absolute inset-0 z-10" href="/" aria-label="Title"></a>
 								<img
 									class="absolute rounded-md inset-0"
 									src="https://kinopoiskapiunofficial.tech/images/posters/kp/4365427.jpg?q_auto,f_auto,w_auto,dpr_auto"

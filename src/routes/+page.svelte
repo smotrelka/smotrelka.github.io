@@ -7,6 +7,8 @@
 	import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import * as Drawer from '$lib/components/ui/drawer/index.js';
+	import * as Table from '$lib/components/ui/table/index.js';
 
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Button } from '$lib/components/ui/button';
@@ -16,6 +18,61 @@
 <div class="p-4 lg:p-9">
 	<div class="max-w-7xl mx-auto gap-4 lg:gap-9 w-full flex flex-wrap sm:flex-nowrap">
 		<main class="grow">
+			<Drawer.Root>
+				<Drawer.Trigger>Open</Drawer.Trigger>
+				<Drawer.Content>
+					<div class="p-4 lg:p-9 overflow-x-hidden overflow-y-auto">
+						<div
+							class="w-full max-w-7xl mx-auto flex gap-4 lg:gap-9 flex-wrap sm:flex-nowrap items-start"
+						>
+							<div class="max-w-52 shrink-0 w-full">
+								<div class="relative pt-[150%] w-full">
+									<a
+										class="absolute inset-0 z-10"
+										href="https://kinopoiskapiunofficial.tech/images/posters/kp/4365427.jpg?q_auto,f_auto,w_auto,dpr_auto"
+										aria-label="Title"
+										target="_blank"
+										rel="nofollow noopener noreferer"
+									></a>
+									<img
+										class="absolute rounded-md inset-0"
+										src="https://kinopoiskapiunofficial.tech/images/posters/kp/4365427.jpg?q_auto,f_auto,w_auto,dpr_auto"
+										alt=""
+									/>
+								</div>
+							</div>
+
+							<Table.Root>
+								<Table.Caption>надёжность данных не гарантирована</Table.Caption>
+								<Table.Body>
+									<Table.Row>
+										<Table.Head>Оригинальное название</Table.Head>
+										<Table.Cell>Wednesday</Table.Cell>
+									</Table.Row>
+									<Table.Row>
+										<Table.Head>Русское название</Table.Head>
+										<Table.Cell>Уэнздэй</Table.Cell>
+									</Table.Row>
+									<Table.Row>
+										<Table.Head>Год</Table.Head>
+										<Table.Cell>2022</Table.Cell>
+									</Table.Row>
+									<Table.Row>
+										<Table.Head>Описание</Table.Head>
+										<Table.Cell
+											>Для выполнения новой миссии секретный агент должен завести поддельную семью.
+											Но он и не подозревает, что его фиктивная жена — наёмная убийца, а удочеренная
+											маленькая девочка — телепат, которая хочет, чтобы приёмные родители, несмотря
+											ни на что, действительно были вместе.</Table.Cell
+										>
+									</Table.Row>
+								</Table.Body>
+							</Table.Root>
+						</div>
+					</div>
+				</Drawer.Content>
+			</Drawer.Root>
+
 			<Card.Root class="p-0">
 				<Card.Content class="p-0 overflow-hidden">
 					<div class="relative pt-[56.25%] w-full overflow-hidden">
@@ -86,28 +143,6 @@
 					</Select.Group>
 				</Select.Content>
 			</Select.Root>
-
-			<div class="space-y-2">
-				{#each [1, 2, 3, 4, 5] as i}
-					<article class="flex items-center gap-2 space-y-2 text-sm">
-						<div class="max-w-12 w-full">
-							<div class="relative pt-[150%] w-full">
-								<a class="absolute inset-0 z-10" href="/" aria-label="Title"></a>
-								<img
-									class="absolute rounded-md inset-0"
-									src="https://kinopoiskapiunofficial.tech/images/posters/kp/4365427.jpg?q_auto,f_auto,w_auto,dpr_auto"
-									alt=""
-								/>
-							</div>
-						</div>
-
-						<div class="space-y-px">
-							<p class="font-bold line-clamp-2">Уэнздэй</p>
-							<p class="opacity-80 text-ellipsis text-xs">2022, сериал</p>
-						</div>
-					</article>
-				{/each}
-			</div>
 		</aside>
 	</div>
 </div>

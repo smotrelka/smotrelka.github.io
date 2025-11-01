@@ -1,10 +1,21 @@
 <script lang="ts">
-	import { Sun, Moon, Search } from '@lucide/svelte';
+	import {
+		Sun,
+		Moon,
+		Search,
+		House,
+		PanelsTopLeft,
+		Box,
+		Clock,
+		Sticker,
+		Palette,
+		Calendar
+	} from '@lucide/svelte';
 
 	import { toggleMode } from 'mode-watcher';
 
 	import * as InputGroup from '$lib/components/ui/input-group/index.js';
-	import * as Tabs from '$lib/components/ui/tabs/index.js';
+	// import * as Tabs from '$lib/components/ui/tabs/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import * as Drawer from '$lib/components/ui/drawer/index.js';
@@ -13,66 +24,134 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
+
+	import { ScrollArea, Scrollbar } from '$lib/components/ui/scroll-area';
+	// import { Tabs, Tabs.Content, TabsList, Tabs.Trigger } from '$lib/components/ui/tabs';
+
+	import { Tabs, Command, Dialog } from 'bits-ui';
+
+	let searchDialogOpen = $state(false);
+
+	function handleKeydown(e: KeyboardEvent) {
+		if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || e.key === '/') {
+			e.preventDefault();
+			searchDialogOpen = true;
+		}
+	}
 </script>
 
+<svelte:document onkeydown={handleKeydown} />
+
 <div class="p-4 lg:p-9">
-	<div class="max-w-7xl mx-auto gap-4 lg:gap-9 w-full flex flex-wrap sm:flex-nowrap">
-		<main class="grow">
-			<Drawer.Root>
-				<Drawer.Trigger>Open</Drawer.Trigger>
-				<Drawer.Content>
-					<div class="p-4 lg:p-9 overflow-x-hidden overflow-y-auto">
-						<div
-							class="w-full max-w-7xl mx-auto flex gap-4 lg:gap-9 flex-wrap sm:flex-nowrap items-start"
+	<div class="max-w-5xl space-y-4 mx-auto w-full">
+		<header class="w-full items-center flex gap-4">
+			<!-- <a class="inline-flex" href="/" aria-label="На главную">
+					
+				</a> -->
+
+			<Dialog.Root bind:open={searchDialogOpen}>
+				<Dialog.Trigger
+					class="border-input hover:bg-accent/40 hover:text-accent-foreground dark:hover:bg-input/50 bg-background text-foreground placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:ring-ring/20 inline-flex rounded-lg border px-3 py-2 text-sm focus-visible:ring-[3px] focus-visible:outline-hidden"
+				>
+					<span class="flex grow items-center">
+						<Search class="text-muted-foreground/80 me-2" size={16} aria-hidden="true" />
+						<span class="text-muted-foreground/70 font-normal">найти&mldr;</span>
+					</span>
+
+					<kbd
+						class="border-border bg-background text-muted-foreground/70 ms-12 -me-1 inline-flex items-center rounded border px-2 font-[inherit] font-medium"
+					>
+						/
+					</kbd>
+				</Dialog.Trigger>
+				<Dialog.Portal>
+					<Dialog.Overlay
+						class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80"
+					/>
+					<Dialog.Content
+						class="rounded-card-lg bg-background shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 outline-hidden fixed left-[50%] top-[50%] z-50 w-full max-w-[94%] translate-x-[-50%] translate-y-[-50%] sm:max-w-lg md:w-full"
+					>
+						<Dialog.Title class="sr-only">Command Menu</Dialog.Title>
+						<Dialog.Description class="sr-only">
+							This is the command menu. Use the arrow keys to navigate and press ⌘K to open the
+							search bar.
+						</Dialog.Description>
+						<Command.Root
+							class="divide-border border-muted bg-background flex h-full w-full flex-col divide-y self-start overflow-hidden rounded-xl border"
 						>
-							<div class="max-w-52 shrink-0 w-full">
-								<div class="relative pt-[150%] w-full">
-									<a
-										class="absolute inset-0 z-10"
-										href="https://kinopoiskapiunofficial.tech/images/posters/kp/4365427.jpg?q_auto,f_auto,w_auto,dpr_auto"
-										aria-label="Title"
-										target="_blank"
-										rel="nofollow noopener noreferer"
-									></a>
-									<img
-										class="absolute rounded-md inset-0"
-										src="https://kinopoiskapiunofficial.tech/images/posters/kp/4365427.jpg?q_auto,f_auto,w_auto,dpr_auto"
-										alt=""
-									/>
-								</div>
-							</div>
+							<Command.Input
+								class="focus-override bg-background placeholder:text-foreground-alt/50 focus:outline-hidden inline-flex truncate px-4 py-3 text-sm transition-colors focus:ring-0"
+								placeholder="Search for something..."
+							/>
+							<Command.List class="max-h-[280px] overflow-y-auto overflow-x-hidden px-2 pb-2">
+								<Command.Viewport>
+									<Command.Empty
+										class="text-muted-foreground flex w-full items-center justify-center pb-6 pt-8 text-sm"
+									>
+										No results found.
+									</Command.Empty>
+									<Command.Group>
+										<Command.GroupHeading class="text-muted-foreground px-3 pb-2 pt-4 text-xs">
+											Suggestions
+										</Command.GroupHeading>
+										<Command.GroupItems>
+											<Command.Item
+												class="rounded-button data-selected:bg-muted outline-hidden flex h-10 cursor-pointer select-none items-center gap-2 px-3 py-2.5 text-sm capitalize"
+												keywords={['getting started', 'tutorial']}
+											>
+												<Sticker class="size-4" />
+												Introduction
+											</Command.Item>
+											<Command.Item
+												class="rounded-button data-selected:bg-muted outline-hidden flex h-10 cursor-pointer select-none items-center gap-2 px-3 py-2.5 text-sm capitalize"
+												keywords={['child', 'custom element', 'snippets']}
+											>
+												<Sun class="size-4 " />
+												Delegation
+											</Command.Item>
+											<Command.Item
+												class="rounded-button data-selected:bg-muted outline-hidden flex h-10 cursor-pointer select-none items-center gap-2 px-3 py-2.5 text-sm capitalize"
+												keywords={['css', 'theme', 'colors', 'fonts', 'tailwind']}
+											>
+												<Palette class="size-4" />
+												Styling
+											</Command.Item>
+										</Command.GroupItems>
+									</Command.Group>
+									<Command.Separator />
+									<Command.Group>
+										<Command.GroupHeading class="text-muted-foreground px-3 pb-2 pt-4 text-xs">
+											Components
+										</Command.GroupHeading>
+										<Command.GroupItems>
+											<Command.Item
+												class="rounded-button data-selected:bg-muted outline-hidden flex h-10 cursor-pointer select-none items-center gap-2 px-3 py-2.5 text-sm capitalize"
+												keywords={['dates', 'times']}
+											>
+												<Calendar class="size-4" />
+												Calendar
+											</Command.Item>
+										</Command.GroupItems>
+									</Command.Group>
+								</Command.Viewport>
+							</Command.List>
+						</Command.Root>
+					</Dialog.Content>
+				</Dialog.Portal>
+			</Dialog.Root>
 
-							<Table.Root>
-								<Table.Caption>надёжность данных не гарантирована</Table.Caption>
-								<Table.Body>
-									<Table.Row>
-										<Table.Head>Оригинальное название</Table.Head>
-										<Table.Cell>Wednesday</Table.Cell>
-									</Table.Row>
-									<Table.Row>
-										<Table.Head>Русское название</Table.Head>
-										<Table.Cell>Уэнздэй</Table.Cell>
-									</Table.Row>
-									<Table.Row>
-										<Table.Head>Год</Table.Head>
-										<Table.Cell>2022</Table.Cell>
-									</Table.Row>
-									<Table.Row>
-										<Table.Head>Описание</Table.Head>
-										<Table.Cell
-											>Для выполнения новой миссии секретный агент должен завести поддельную семью.
-											Но он и не подозревает, что его фиктивная жена — наёмная убийца, а удочеренная
-											маленькая девочка — телепат, которая хочет, чтобы приёмные родители, несмотря
-											ни на что, действительно были вместе.</Table.Cell
-										>
-									</Table.Row>
-								</Table.Body>
-							</Table.Root>
-						</div>
-					</div>
-				</Drawer.Content>
-			</Drawer.Root>
+			<Button onclick={toggleMode} variant="outline" size="icon">
+				<Sun
+					class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 !transition-all dark:-rotate-90 dark:scale-0"
+				/>
+				<Moon
+					class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 !transition-all dark:rotate-0 dark:scale-100"
+				/>
+				<span class="sr-only">Toggle theme</span>
+			</Button>
+		</header>
 
+		<main>
 			<Card.Root class="p-0">
 				<Card.Content class="p-0 overflow-hidden">
 					<div class="relative pt-[56.25%] w-full overflow-hidden">
@@ -95,54 +174,74 @@
 			</Card.Root>
 		</main>
 
-		<aside class="h-full max-w-sm w-full shrink-0 space-y-4">
-			<header class="w-full items-center flex gap-4">
-				<!-- <a class="inline-flex" href="/" aria-label="На главную">
-					
-				</a> -->
-
-				<InputGroup.Root>
-					<InputGroup.Input type="search" placeholder="поиск по названию&mldr;" />
-					<InputGroup.Addon>
-						<Search />
-					</InputGroup.Addon>
-					<!-- <InputGroup.Addon align="inline-end">12 results</InputGroup.Addon> -->
-				</InputGroup.Root>
-
-				<Button onclick={toggleMode} variant="outline" size="icon">
-					<Sun
-						class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 !transition-all dark:-rotate-90 dark:scale-0"
-					/>
-					<Moon
-						class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 !transition-all dark:rotate-0 dark:scale-100"
-					/>
-					<span class="sr-only">Toggle theme</span>
-				</Button>
-			</header>
-
-			<Select.Root type="single">
-				<Select.Trigger class="w-full">Последние обновления</Select.Trigger>
-				<Select.Content>
-					<Select.Group>
-						<Select.Label>Сортировка</Select.Label>
-						<Select.Item value="recent">🔁 Последние обновления</Select.Item>
-						<Select.Item value="hot">🔥 Сейчас смотрят</Select.Item>
-						<Select.Item value="popular">🏆 Популярное</Select.Item>
-					</Select.Group>
-					<Select.Group>
-						<Select.Label>Мои списки</Select.Label>
-						<Select.Item value="1">👁️ Смотрю</Select.Item>
-						<Select.Item value="2">⏩ В планах</Select.Item>
-						<Select.Item value="3">✅ Просмотрено</Select.Item>
-						<Select.Item value="4">🗑️ Брошено</Select.Item>
-						<Select.Item value="5">⭐ Избранное</Select.Item>
-					</Select.Group>
-					<Select.Group>
-						<Select.Label>Прочее</Select.Label>
-						<Select.Item value="history">⌛ История просмотра</Select.Item>
-					</Select.Group>
-				</Select.Content>
-			</Select.Root>
-		</aside>
+		<div class="w-full flex gap-4 flex-wrap sm:flex-nowrap items-start">
+			<div class="bg-background overflow-hidden rounded-md border">
+				<div class="relative w-full overflow-auto">
+					<table class="w-full text-sm">
+						<tbody class="[&_tr:last-child]:border-0">
+							<tr
+								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+							>
+								<td colspan="2" class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">
+									<div class="max-w-16 shrink-0 w-full">
+										<div class="relative pt-[150%] w-full">
+											<a
+												class="absolute inset-0 z-10"
+												href="https://kinopoiskapiunofficial.tech/images/posters/kp/4365427.jpg?q_auto,f_auto,w_auto,dpr_auto"
+												aria-label="Title"
+												target="_blank"
+												rel="nofollow noopener noreferer"
+											></a>
+											<img
+												class="absolute rounded-sm inset-0"
+												src="https://kinopoiskapiunofficial.tech/images/posters/kp/4365427.jpg?q_auto,f_auto,w_auto,dpr_auto"
+												alt=""
+											/>
+										</div>
+									</div>
+								</td>
+							</tr>
+							<tr
+								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+							>
+								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
+									>Оригинальное название</td
+								>
+								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">Wednesday</td>
+							</tr>
+							<tr
+								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+							>
+								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
+									>Русское название</td
+								>
+								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">Уэнздэй</td>
+							</tr>
+							<tr
+								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+							>
+								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
+									>Год</td
+								>
+								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">2022</td>
+							</tr>
+							<tr
+								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+							>
+								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
+									>Описание</td
+								>
+								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2"
+									>Для выполнения новой миссии секретный агент должен завести поддельную семью. Но
+									он и не подозревает, что его фиктивная жена — наёмная убийца, а удочеренная
+									маленькая девочка — телепат, которая хочет, чтобы приёмные родители, несмотря ни
+									на что, действительно были вместе.</td
+								>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>

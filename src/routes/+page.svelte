@@ -149,7 +149,7 @@
 							<tr
 								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
 							>
-								<td colspan="2"></td>
+								<td colspan="2">
 									<div
 										style="position: relative; width: 100%; padding-top: 56.25%; background: #000;"
 									>

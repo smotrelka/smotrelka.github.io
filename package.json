@@ -29,6 +29,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-svelte": "^3.12.5",
     "globals": "^16.4.0",
+    "meilisearch": "^0.54.0",
     "mode-watcher": "^1.1.0",
     "prettier-plugin-svelte": "^3.4.0",
     "svelte": "^5.41.3",

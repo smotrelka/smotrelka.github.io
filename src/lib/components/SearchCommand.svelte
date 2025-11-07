@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Command } from 'bits-ui';
-	import { Loader, Sticker, Sun, Palette, Search } from '@lucide/svelte';
+	import { Search, LoaderCircle } from '@lucide/svelte';
 	import type { SearchResponse } from 'meilisearch';
+	import { onMount } from 'svelte';
 
 	interface MeiliSearchTitle {
 		id: number;
@@ -18,24 +18,27 @@
 	const MEILI_URL = 'http://127.0.0.1:7700';
 	const MEILI_KEY = 'public_search_key';
 
+	let inputEl: HTMLInputElement | undefined;
 	let query = $state('');
 	let results: MeiliSearchTitle[] = $state([]);
 	let loading = $state(false);
 	let controller: AbortController | null = null;
+
 	let timeout: ReturnType<typeof setTimeout>;
-	let isFocused = $state(false);
+	let loadingDelay: ReturnType<typeof setTimeout>;
 
 	$effect(() => {
 		clearTimeout(timeout);
 
 		const q = query.trim();
+
 		if (!q) {
 			results = [];
 			loading = false;
 			return;
 		}
 
-		timeout = setTimeout(() => searchTitles(q), 200);
+		timeout = setTimeout(() => searchTitles(q), 100);
 	});
 
 	async function searchTitles(q: string) {
@@ -47,6 +50,8 @@
 		if (controller) {
 			controller.abort();
 		}
+
+		const start = performance.now();
 
 		controller = new AbortController();
 		loading = true;
@@ -60,7 +65,7 @@
 				},
 				body: JSON.stringify({
 					q,
-					limit: 10
+					limit: 20
 				}),
 				signal: controller.signal
 			});
@@ -75,116 +80,59 @@
 				results = [];
 			}
 		} finally {
-			loading = false;
+			const elapsed = performance.now() - start;
+			const minDuration = 300;
+			const delay = Math.max(0, minDuration - elapsed);
+
+			setTimeout(() => (loading = false), delay);
 		}
-	}
-
-	function handleSelect(item: MeiliSearchTitle) {
-		console.log('Selected:', item);
-		isFocused = false;
-		// Handle selection here
-	}
-
-	function handleSuggestion(type: string) {
-		console.log('Suggestion clicked:', type);
-		isFocused = false;
-		// Handle suggestion here
 	}
 </script>
 
-<div
-	class="divide-border bg-popover text-popover-foreground border-muted flex h-full w-full flex-col divide-y self-start rounded-xl border relative grow"
->
-	<Command.Root shouldFilter={false}>
-		<div class="flex items-center relative">
-			<span
-				class="absolute text-muted-foreground/80 top-1/2 -translate-y-1/2 left-3 pointer-events-none"
-				aria-hidden="true"
-			>
+<div class="space-y-4">
+	<div class="relative">
+		<input
+			name="search"
+			autocomplete="off"
+			autocorrect="off"
+			autocapitalize="off"
+			class="border-input file:text-foreground placeholder:text-muted-foreground/70 flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none peer ps-9 pe-9"
+			type="search"
+			placeholder="начните вводить название&mldr;"
+			bind:value={query}
+			bind:this={inputEl}
+		/>
+
+		<div
+			class="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 opacity-70 peer-disabled:opacity-50"
+		>
+			{#if loading}
+				<LoaderCircle class="animate-spin" size={16} aria-hidden="true" role="presentation" />
+			{:else}
 				<Search size={16} aria-hidden="true" />
-			</span>
-
-			<Command.Input
-				class="border-input grow hover:bg-accent/40 hover:text-accent-foreground dark:hover:bg-input/50 bg-background text-foreground placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:ring-ring/20 inline-flex rounded-lg border pr-3 pl-8 py-2 text-sm focus-visible:ring-[3px] focus-visible:outline-hidden"
-				bind:value={query}
-				placeholder="найти&mldr;"
-				onfocus={() => (isFocused = true)}
-				onblur={() => (isFocused = false)}
-			/>
+			{/if}
 		</div>
+	</div>
 
-		{#if isFocused}
-			<div class="absolute top-full w-full bg-white dark:bg-muted z-50 max-h-96 overflow-hidden">
-				<Command.List class="max-h-96 overflow-y-auto p-2">
-					<Command.Viewport>
-						{#if results.length > 0}
-							<Command.Group>
-								<!-- <Command.GroupHeading class="px-3 pt-2 pb-2 text-xs text-gray-500">
-								Results
-							</Command.GroupHeading> -->
-								<Command.GroupItems>
-									{#each results as item (item.id)}
-										<Command.Item
-											value={item.id.toString()}
-											onSelect={() => handleSelect(item)}
-											class="px-3 py-2 rounded-md cursor-pointer transition-colors data-highlighted:bg-ring data-selected:bg-ring flex items-center gap-3"
-										>
-											{#if item.cover}
-												<img
-													src={item.cover}
-													alt={item.name_ru || item.name_en || item.original_name}
-													class="h-12 w-8 rounded-sm object-cover shrink-0"
-												/>
-											{/if}
-											<div class="min-w-0">
-												<div class="font-medium text-gray-900 truncate">
-													{item.name_ru || item.name_en || item.original_name}
-													{#if item.year}
-														<span class="text-gray-500 ml-1">({item.year})</span>
-													{/if}
-												</div>
-												<div class="text-sm text-gray-600">
-													{item.type === 'movie' ? 'фильм' : 'сериал'}
-												</div>
-											</div>
-										</Command.Item>
-									{/each}
-								</Command.GroupItems>
-							</Command.Group>
-						{:else if query && !loading}
-							<Command.Empty class="py-8 px-4 text-center text-gray-400 text-sm">
-								No results found.
-							</Command.Empty>
-						{:else if !query}
-							<Command.Group>
-								<Command.GroupHeading class="px-3 pt-2 pb-2 text-xs text-gray-500">
-									Suggestions
-								</Command.GroupHeading>
-								<Command.GroupItems>
-									<Command.Item
-										onSelect={() => handleSuggestion('popular')}
-										class="px-3 py-2 rounded-md cursor-pointer transition-colors data-[highlighted]:bg-gray-100 data-[selected]:bg-indigo-100 flex items-center gap-2"
-									>
-										<Sticker class="w-4 h-4" /> Популярное
-									</Command.Item>
-									<Command.Item
-										onSelect={() => handleSuggestion('new')}
-										class="px-3 py-2 rounded-md cursor-pointer transition-colors data-[highlighted]:bg-gray-100 data-[selected]:bg-indigo-100 flex items-center gap-2"
-									>
-										<Sun class="w-4 h-4" /> Новинки
-									</Command.Item>
-									<Command.Item
-										onSelect={() => handleSuggestion('random')}
-										class="px-3 py-2 rounded-md cursor-pointer transition-colors data-[highlighted]:bg-gray-100 data-[selected]:bg-indigo-100 flex items-center gap-2"
-									>
-										<Palette class="w-4 h-4" /> Случайное
-									</Command.Item>
-								</Command.GroupItems>
-							</Command.Group>
-						{/if}
-					</Command.Viewport>
-				</Command.List>
-			</div>
-		{/if}
-	</Command.Root>
+	{#if results.length}
+		<ul
+			class="grid gap-3 grid-cols-[repeat(auto-fill,minmax(90px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(130px,1fr))] text-xs sm:text-sm lg:grid-cols-[repeat(auto-fill,minmax(150px,1fr))]"
+		>
+			{#each results as i (i.id)}
+				<li>
+					{#if i.cover}
+						<img class="rounded-sm" src={i.cover} alt={i.name_ru || i.name_en || i.original_name} />
+					{/if}
+
+					<p class="font-medium line-clamp-2 mt-2">
+						{i.name_ru || i.name_en || i.original_name || i.alt_names?.[0]}
+					</p>
+
+					<div class="flex gap-2 mt-1 flex-wrap text-xs">
+						<div class="rounded-full px-2 py-1 bg-zinc-200 dark:bg-zinc-900">{i.year}</div>
+					</div>
+				</li>
+			{/each}
+		</ul>
+	{/if}
 </div>

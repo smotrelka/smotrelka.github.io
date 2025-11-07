@@ -3,29 +3,31 @@
 		Sun,
 		Moon,
 		Search,
-		House,
-		PanelsTopLeft,
-		Box,
-		Clock,
-		Sticker,
-		Palette,
-		Calendar
+		Play,
+		Flame,
+		Trophy,
+		Settings,
+		Plus,
+		Ellipsis,
+		UserCircle,
+		Podcast,
+		ChevronRight,
+		Check
 	} from '@lucide/svelte';
 
 	import { toggleMode } from 'mode-watcher';
 
-	import * as InputGroup from '$lib/components/ui/input-group/index.js';
-	// import * as Tabs from '$lib/components/ui/tabs/index.js';
-	import * as Card from '$lib/components/ui/card/index.js';
-	import * as Select from '$lib/components/ui/select/index.js';
-	import * as Drawer from '$lib/components/ui/drawer/index.js';
-	import * as Table from '$lib/components/ui/table/index.js';
+	// import * as InputGroup from '$lib/components/ui/input-group/index.js';
+	// import * as Card from '$lib/components/ui/card/index.js';
+	// import * as Select from '$lib/components/ui/select/index.js';
+	// import * as Drawer from '$lib/components/ui/drawer/index.js';
+	// import * as Table from '$lib/components/ui/table/index.js';
 
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { Button } from '$lib/components/ui/button';
-	import { Separator } from '$lib/components/ui/separator';
+	// import { Spinner } from '$lib/components/ui/spinner';
+	// import { Button } from '$lib/components/ui/button';
+	// import { Separator } from '$lib/components/ui/separator';
 
-	import { ToggleGroup } from 'bits-ui';
+	import { ToggleGroup, Tabs, Button, DropdownMenu } from 'bits-ui';
 
 	import { ScrollArea, Scrollbar } from '$lib/components/ui/scroll-area';
 	// import { Tabs, Tabs.Content, TabsList, Tabs.Trigger } from '$lib/components/ui/tabs';
@@ -33,6 +35,9 @@
 	import SearchCommand from '$lib/components/SearchCommand.svelte';
 
 	let activeProvider: string | undefined = $state();
+
+	let apiUrl = $state('api.smotrelka.github.io');
+	let activeTab = $state('watch');
 
 	let searchDialogOpen = $state(false);
 
@@ -42,29 +47,315 @@
 			searchDialogOpen = true;
 		}
 	}
+
+	$effect(() => {
+		if (activeTab === 'search') {
+			setTimeout(() => {
+				const content = document.querySelector(
+					`[role="tabpanel"][data-value="search"][data-state="active"]`
+				);
+				const firstInput = content?.querySelector('input, textarea, select') as HTMLElement;
+				firstInput?.focus();
+			});
+		}
+	});
 </script>
 
 <svelte:document onkeydown={handleKeydown} />
 
 <div class="p-4 lg:p-9">
 	<div class="max-w-5xl space-y-4 mx-auto w-full">
-		<header class="w-full items-center flex gap-4">
-			<!-- <a class="inline-flex" href="/" aria-label="На главную">
-					
-				</a> -->
+		<div class="">
+			<Tabs.Root class="space-y-4" bind:value={activeTab}>
+				<ScrollArea>
+					<div class="flex gap-3">
+						<Tabs.List
+							class="inline-flex w-fit items-center justify-center text-zinc-700 dark:text-zinc-400 rounded-lg p-1 gap-1 bg-zinc-100 dark:bg-zinc-900"
+						>
+							<Tabs.Trigger
+								value="watch"
+								class="data-[state=inactive]:hover:text-zinc-950 data-[state=inactive]:dark:hover:text-zinc-50 focus-visible:border-ring gap-1.5 focus-visible:ring-ring/50 aria-selected:text-foreground inline-flex items-center justify-center px-4 py-2 text-sm font-medium whitespace-nowrap outline-hidden transition-all focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-200 data-[state=active]:text-zinc-950 rounded-md data-[state=active]:shadow-none"
+							>
+								<Play class="opacity-70" size={16} aria-hidden="true" />
+								Просмотр
+							</Tabs.Trigger>
+							<Tabs.Trigger
+								value="search"
+								class="data-[state=inactive]:hover:text-zinc-950 data-[state=inactive]:dark:hover:text-zinc-50 focus-visible:border-ring gap-1.5 focus-visible:ring-ring/50 aria-selected:text-foreground inline-flex items-center justify-center px-4 py-2 text-sm font-medium whitespace-nowrap outline-hidden transition-all focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-200 data-[state=active]:text-zinc-950 rounded-md data-[state=active]:shadow-none"
+							>
+								<Search class="opacity-70" size={16} aria-hidden="true" />
+								Поиск
+							</Tabs.Trigger>
+							<Tabs.Trigger
+								value="popular"
+								class="data-[state=inactive]:hover:text-zinc-950 data-[state=inactive]:dark:hover:text-zinc-50 focus-visible:border-ring gap-1.5 focus-visible:ring-ring/50 aria-selected:text-foreground inline-flex items-center justify-center px-4 py-2 text-sm font-medium whitespace-nowrap outline-hidden transition-all focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-200 data-[state=active]:text-zinc-950 rounded-md data-[state=active]:shadow-none"
+							>
+								<Trophy class="opacity-70" size={16} aria-hidden="true" />
+								Популярное
+							</Tabs.Trigger>
+							<Tabs.Trigger
+								value="hot"
+								class="data-[state=inactive]:hover:text-zinc-950 data-[state=inactive]:dark:hover:text-zinc-50 focus-visible:border-ring gap-1.5 focus-visible:ring-ring/50 aria-selected:text-foreground inline-flex items-center justify-center px-4 py-2 text-sm font-medium whitespace-nowrap outline-hidden transition-all focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-200 data-[state=active]:text-zinc-950 rounded-md data-[state=active]:shadow-none"
+							>
+								<Flame class="opacity-70" size={16} aria-hidden="true" />
+								Сейчас смотрят
+							</Tabs.Trigger>
+							<Tabs.Trigger
+								value="settings"
+								class="data-[state=inactive]:hover:text-zinc-950 data-[state=inactive]:dark:hover:text-zinc-50 focus-visible:border-ring gap-1.5 focus-visible:ring-ring/50 aria-selected:text-foreground inline-flex items-center justify-center px-4 py-2 text-sm font-medium whitespace-nowrap outline-hidden transition-all focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-200 data-[state=active]:text-zinc-950 rounded-md data-[state=active]:shadow-none"
+							>
+								<Settings class="opacity-70" size={16} aria-hidden="true" />
+								Настройки
+							</Tabs.Trigger>
+						</Tabs.List>
 
-			<SearchCommand />
+						<!-- <Button onclick={toggleMode}>
+							<Sun
+								class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 !transition-all dark:-rotate-90 dark:scale-0"
+							/>
+							<Moon
+								class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 !transition-all dark:rotate-0 dark:scale-100"
+							/>
+							<span class="sr-only">Toggle theme</span>
+						</Button> -->
 
-			<Button onclick={toggleMode} variant="outline" size="icon">
-				<Sun
-					class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 !transition-all dark:-rotate-90 dark:scale-0"
-				/>
-				<Moon
-					class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 !transition-all dark:rotate-0 dark:scale-100"
-				/>
-				<span class="sr-only">Toggle theme</span>
-			</Button>
-		</header>
+						<DropdownMenu.Root>
+							<DropdownMenu.Trigger
+								class="border-input text-foreground shadow-btn hover:bg-muted inline-flex h-10 w-10 select-none items-center justify-center rounded-full border text-sm font-medium active:scale-[0.98]"
+							>
+								<Ellipsis class="text-foreground h-6 w-6" />
+							</DropdownMenu.Trigger>
+							<DropdownMenu.Portal>
+								<DropdownMenu.Content
+									class="border-muted bg-background shadow-popover outline-hidden focus-visible:outline-hidden w-[229px] rounded-xl border px-1 py-1.5"
+									sideOffset={8}
+								>
+									<DropdownMenu.Item
+										class="rounded-button data-highlighted:bg-muted ring-0! ring-transparent! flex h-10 select-none items-center py-3 pl-3 pr-1.5 text-sm font-medium focus-visible:outline-none"
+									>
+										<div class="flex items-center">
+											<UserCircle class="text-foreground-alt mr-2 size-5" />
+											Profile
+										</div>
+										<div class="ml-auto flex items-center gap-px">
+											<kbd
+												class="rounded-button border-dark-10 bg-background-alt text-muted-foreground shadow-kbd inline-flex size-5 items-center justify-center border text-xs"
+											>
+												⌘
+											</kbd>
+											<kbd
+												class="rounded-button border-dark-10 bg-background-alt text-muted-foreground shadow-kbd inline-flex size-5 items-center justify-center border text-[10px]"
+											>
+												P
+											</kbd>
+										</div>
+									</DropdownMenu.Item>
+									<DropdownMenu.Item
+										class="rounded-button data-highlighted:bg-muted ring-0! ring-transparent! flex h-10 select-none items-center py-3 pl-3 pr-1.5 text-sm font-medium focus-visible:outline-none"
+									>
+										<div class="flex items-center">
+											<Settings class="text-foreground-alt mr-2 size-5" />
+											Settings
+										</div>
+										<div class="ml-auto flex items-center gap-px">
+											<kbd
+												class="rounded-button border-dark-10 bg-background-alt text-muted-foreground shadow-kbd inline-flex size-5 items-center justify-center border text-xs"
+											>
+												⌘
+											</kbd>
+											<kbd
+												class="rounded-button border-dark-10 bg-background-alt text-muted-foreground shadow-kbd inline-flex size-5 items-center justify-center border text-[10px]"
+											>
+												S
+											</kbd>
+										</div>
+									</DropdownMenu.Item>
+									<DropdownMenu.Sub>
+										<DropdownMenu.SubTrigger
+											class="rounded-button data-highlighted:bg-muted data-[state=open]:bg-muted ring-0! ring-transparent! flex h-10 select-none items-center py-3 pl-3 pr-1.5 text-sm font-medium focus-visible:outline-none"
+										>
+											<div class="flex items-center">
+												<Podcast class="text-foreground-alt mr-2 size-5" />
+												Источник
+											</div>
+											<div class="ml-auto flex items-center gap-px">
+												<ChevronRight class="text-foreground-alt size-5" />
+											</div>
+										</DropdownMenu.SubTrigger>
+										<DropdownMenu.Portal>
+											<DropdownMenu.SubContent
+												class="border-muted bg-background shadow-popover ring-0! ring-transparent! w-[209px] rounded-xl border px-1 py-1.5 outline-none"
+												sideOffset={10}
+											>
+												<DropdownMenu.RadioGroup bind:value={apiUrl}>
+													<DropdownMenu.RadioItem
+														value="huntabyte"
+														class="rounded-button data-highlighted:bg-muted ring-0! ring-transparent! flex h-10 select-none items-center py-3 pl-3 pr-1.5 text-sm font-medium focus-visible:outline-none"
+													>
+														{#snippet children({ checked })}
+															api.smotrelka.github.io
+															{#if checked}
+																<Check class="ml-auto size-4" />
+															{/if}
+														{/snippet}
+													</DropdownMenu.RadioItem>
+												</DropdownMenu.RadioGroup>
+											</DropdownMenu.SubContent>
+										</DropdownMenu.Portal>
+									</DropdownMenu.Sub>
+								</DropdownMenu.Content>
+							</DropdownMenu.Portal>
+						</DropdownMenu.Root>
+					</div>
+					<Scrollbar orientation="horizontal" />
+				</ScrollArea>
+				<Tabs.Content value="watch">
+					<div class="w-full flex gap-4 flex-wrap sm:flex-nowrap items-start">
+						<div class="bg-background overflow-hidden rounded-md border">
+							<div class="relative w-full overflow-auto">
+								<table class="w-full text-xs sm:text-sm">
+									<tbody class="[&_tr:last-child]:border-0">
+										<tr
+											class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+										>
+											<td colspan="2">
+												<div
+													style="position: relative; width: 100%; padding-top: 56.25%; background: #000;"
+												>
+													<iframe
+														title="title"
+														style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+														width="100%"
+														height="100%"
+														src="https://52dce3a2.obrut.show/embed/0MTM/content/wUDM5ATM"
+														frameborder="0"
+														allow="*"
+														allowfullscreen
+													></iframe>
+												</div>
+											</td>
+										</tr>
+										<tr
+											class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+										>
+											<td
+												class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
+												>Доступные источники</td
+											>
+											<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">
+												<ToggleGroup.Root
+													bind:value={activeProvider}
+													type="single"
+													class="flex items-center gap-1"
+												>
+													<ToggleGroup.Item
+														aria-label="toggle bold"
+														value="bold"
+														class="rounded-full px-3 py-1 bg-background-alt hover:bg-muted active:bg-dark-10 data-[state=on]:bg-ring data-[state=off]:text-foreground-alt data-[state=on]:text-foreground active:data-[state=on]:bg-dark-10 inline-flex  items-center justify-center transition-all active:scale-[0.98]"
+													>
+														Kodik
+													</ToggleGroup.Item>
+													<ToggleGroup.Item
+														aria-label="toggle italic"
+														value="italic"
+														class="rounded-full px-3 py-1 bg-background-alt hover:bg-muted active:bg-dark-10 data-[state=on]:bg-ring data-[state=off]:text-foreground-alt data-[state=on]:text-foreground active:data-[state=on]:bg-dark-10 inline-flex  items-center justify-center transition-all active:scale-[0.98]"
+													>
+														Turbo
+													</ToggleGroup.Item>
+													<ToggleGroup.Item
+														aria-label="toggle strikethrough"
+														value="strikethrough"
+														class="rounded-full px-3 py-1 bg-background-alt hover:bg-muted active:bg-dark-10 data-[state=on]:bg-ring data-[state=off]:text-foreground-alt data-[state=on]:text-foreground active:data-[state=on]:bg-dark-10 inline-flex  items-center justify-center transition-all active:scale-[0.98]"
+													>
+														Lumex
+													</ToggleGroup.Item>
+												</ToggleGroup.Root>
+											</td>
+										</tr>
+										<tr
+											class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+										>
+											<td colspan="2" class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">
+												<div class="max-w-16 shrink-0 w-full">
+													<div class="relative pt-[150%] w-full">
+														<a
+															class="absolute inset-0 z-10"
+															href="https://kinopoiskapiunofficial.tech/images/posters/kp/4365427.jpg?q_auto,f_auto,w_auto,dpr_auto"
+															aria-label="Title"
+															target="_blank"
+															rel="nofollow noopener noreferer"
+														></a>
+														<img
+															class="absolute rounded-sm inset-0"
+															src="https://kinopoiskapiunofficial.tech/images/posters/kp/4365427.jpg?q_auto,f_auto,w_auto,dpr_auto"
+															alt=""
+														/>
+													</div>
+												</div>
+											</td>
+										</tr>
+										<tr
+											class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+										>
+											<td
+												class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
+												>Оригинальное название</td
+											>
+											<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">Wednesday</td>
+										</tr>
+										<tr
+											class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+										>
+											<td
+												class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
+												>Русское название</td
+											>
+											<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">Уэнздэй</td>
+										</tr>
+										<tr
+											class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+										>
+											<td
+												class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
+												>Год</td
+											>
+											<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">2022</td>
+										</tr>
+										<tr
+											class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+										>
+											<td
+												class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
+												>Описание</td
+											>
+											<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2"
+												>Для выполнения новой миссии секретный агент должен завести поддельную
+												семью. Но он и не подозревает, что его фиктивная жена — наёмная убийца, а
+												удочеренная маленькая девочка — телепат, которая хочет, чтобы приёмные
+												родители, несмотря ни на что, действительно были вместе.</td
+											>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</Tabs.Content>
+				<Tabs.Content value="search" tabindex={1}>
+					<SearchCommand />
+				</Tabs.Content>
+				<Tabs.Content value="popular">
+					<p class="text-muted-foreground p-4 pt-1 text-center text-xs">
+						*здесь будет популярные тайтлы*
+					</p>
+				</Tabs.Content>
+				<Tabs.Content value="hot">
+					<p class="text-muted-foreground p-4 pt-1 text-center text-xs">
+						*здесь будут горячие тайтлы*
+					</p>
+				</Tabs.Content>
+			</Tabs.Root>
+		</div>
 
 		<!-- <main class="relative pt-[56.25%] w-full overflow-hidden border bg-muted/50 rounded-md">
 			<span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse">
@@ -82,130 +373,5 @@
 				>
 			</span>
 		</main> -->
-
-		<div class="w-full flex gap-4 flex-wrap sm:flex-nowrap items-start">
-			<div class="bg-background overflow-hidden rounded-md border">
-				<div class="relative w-full overflow-auto">
-					<table class="w-full text-xs sm:text-sm">
-						<tbody class="[&_tr:last-child]:border-0">
-							<tr
-								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
-							>
-								<td colspan="2" class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">
-									<div class="max-w-16 shrink-0 w-full">
-										<div class="relative pt-[150%] w-full">
-											<a
-												class="absolute inset-0 z-10"
-												href="https://kinopoiskapiunofficial.tech/images/posters/kp/4365427.jpg?q_auto,f_auto,w_auto,dpr_auto"
-												aria-label="Title"
-												target="_blank"
-												rel="nofollow noopener noreferer"
-											></a>
-											<img
-												class="absolute rounded-sm inset-0"
-												src="https://kinopoiskapiunofficial.tech/images/posters/kp/4365427.jpg?q_auto,f_auto,w_auto,dpr_auto"
-												alt=""
-											/>
-										</div>
-									</div>
-								</td>
-							</tr>
-							<tr
-								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
-							>
-								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
-									>Доступные источники</td
-								>
-								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">
-									<ToggleGroup.Root
-										bind:value={activeProvider}
-										type="single"
-										class="flex items-center gap-1"
-									>
-										<ToggleGroup.Item
-											aria-label="toggle bold"
-											value="bold"
-											class="rounded-full px-3 py-1 bg-background-alt hover:bg-muted active:bg-dark-10 data-[state=on]:bg-ring data-[state=off]:text-foreground-alt data-[state=on]:text-foreground active:data-[state=on]:bg-dark-10 inline-flex  items-center justify-center transition-all active:scale-[0.98]"
-										>
-											Kodik
-										</ToggleGroup.Item>
-										<ToggleGroup.Item
-											aria-label="toggle italic"
-											value="italic"
-											class="rounded-full px-3 py-1 bg-background-alt hover:bg-muted active:bg-dark-10 data-[state=on]:bg-ring data-[state=off]:text-foreground-alt data-[state=on]:text-foreground active:data-[state=on]:bg-dark-10 inline-flex  items-center justify-center transition-all active:scale-[0.98]"
-										>
-											Turbo
-										</ToggleGroup.Item>
-										<ToggleGroup.Item
-											aria-label="toggle strikethrough"
-											value="strikethrough"
-											class="rounded-full px-3 py-1 bg-background-alt hover:bg-muted active:bg-dark-10 data-[state=on]:bg-ring data-[state=off]:text-foreground-alt data-[state=on]:text-foreground active:data-[state=on]:bg-dark-10 inline-flex  items-center justify-center transition-all active:scale-[0.98]"
-										>
-											Lumex
-										</ToggleGroup.Item>
-									</ToggleGroup.Root>
-								</td>
-							</tr>
-							<tr
-								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
-							>
-								<td colspan="2">
-									<div
-										style="position: relative; width: 100%; padding-top: 56.25%; background: #000;"
-									>
-										<iframe
-											style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-											width="100%"
-											height="100%"
-											src="https://52dce3a2.obrut.show/embed/0MTM/content/wUDM5ATM"
-											frameborder="0"
-											allow="*"
-											allowfullscreen
-										></iframe>
-									</div>
-								</td>
-							</tr>
-							<tr
-								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
-							>
-								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
-									>Оригинальное название</td
-								>
-								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">Wednesday</td>
-							</tr>
-							<tr
-								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
-							>
-								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
-									>Русское название</td
-								>
-								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">Уэнздэй</td>
-							</tr>
-							<tr
-								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
-							>
-								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
-									>Год</td
-								>
-								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2">2022</td>
-							</tr>
-							<tr
-								class="data-[state=selected]:bg-muted border-b transition-colors *:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
-							>
-								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 bg-muted/50 py-2 font-medium"
-									>Описание</td
-								>
-								<td class="p-3 align-top [&:has([role=checkbox])]:pr-0 py-2"
-									>Для выполнения новой миссии секретный агент должен завести поддельную семью. Но
-									он и не подозревает, что его фиктивная жена — наёмная убийца, а удочеренная
-									маленькая девочка — телепат, которая хочет, чтобы приёмные родители, несмотря ни
-									на что, действительно были вместе.</td
-								>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
-		</div>
 	</div>
 </div>

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Search, LoaderCircle } from '@lucide/svelte';
+	import { ScrollArea } from 'bits-ui';
 	import type { SearchResponse } from 'meilisearch';
-	import { onMount } from 'svelte';
 
 	interface MeiliSearchTitle {
 		id: number;
@@ -89,7 +89,7 @@
 	}
 </script>
 
-<div class="space-y-4">
+<div class="flex flex-col gap-4 max-h-dvh">
 	<div class="relative">
 		<input
 			name="search"
@@ -114,25 +114,81 @@
 		</div>
 	</div>
 
-	{#if results.length}
-		<ul
-			class="grid gap-3 grid-cols-[repeat(auto-fill,minmax(90px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(130px,1fr))] text-xs sm:text-sm lg:grid-cols-[repeat(auto-fill,minmax(150px,1fr))]"
-		>
-			{#each results as i (i.id)}
-				<li>
-					{#if i.cover}
-						<img class="rounded-sm" src={i.cover} alt={i.name_ru || i.name_en || i.original_name} />
+	<ScrollArea.Root
+		class="border-dark-10 bg-background-alt shadow-card relative overflow-hidden rounded-[10px] border px-4 py-4"
+	>
+		<ScrollArea.Viewport class="h-full max-h-[200px] w-full">
+			<div class="max-w-5xl mx-auto w-full">
+				{#if query.trim().length}
+					{#if results.length}
+						<ul
+							class="grid gap-3 grid-cols-[repeat(auto-fill,minmax(90px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(130px,1fr))] text-xs sm:text-sm lg:grid-cols-[repeat(auto-fill,minmax(150px,1fr))]"
+						>
+							{#each results as i (i.id)}
+								<li>
+									{#if i.cover}
+										<img
+											class="rounded-sm w-full"
+											src={i.cover}
+											alt={i.name_ru || i.name_en || i.original_name}
+										/>
+									{/if}
+
+									<p class="font-medium line-clamp-2 mt-2">
+										{i.name_ru || i.name_en || i.original_name || i.alt_names?.[0]}
+									</p>
+
+									<div class="flex gap-2 mt-1 flex-wrap text-xs">
+										<div class="rounded-full px-2 py-1 bg-zinc-200 dark:bg-zinc-900">{i.year}</div>
+									</div>
+								</li>
+							{/each}
+						</ul>
+					{:else if !loading}
+						<p>Увы, ничего не найдено по запросу</p>
 					{/if}
-
-					<p class="font-medium line-clamp-2 mt-2">
-						{i.name_ru || i.name_en || i.original_name || i.alt_names?.[0]}
-					</p>
-
-					<div class="flex gap-2 mt-1 flex-wrap text-xs">
-						<div class="rounded-full px-2 py-1 bg-zinc-200 dark:bg-zinc-900">{i.year}</div>
+				{:else}
+					<div class="flex flex-wrap gap-2 text-xs">
+						<button
+							type="button"
+							class="rounded-full border border-zinc-300 hover:border-zinc-400 select-none px-3 py-2"
+							onclick={(e) => {
+								e.preventDefault();
+								query = '#popular';
+							}}>Популярное за всё время</button
+						>
+						<button
+							type="button"
+							class="rounded-full border border-zinc-300 hover:border-zinc-400 select-none px-3 py-2"
+							onclick={(e) => {
+								e.preventDefault();
+								query = '#popular_24h';
+							}}>Популярное за 24ч</button
+						>
+						<button
+							type="button"
+							class="rounded-full border border-zinc-300 hover:border-zinc-400 select-none px-3 py-2"
+							onclick={(e) => {
+								e.preventDefault();
+								query = '#hot';
+							}}>Сейчас смотрят</button
+						>
 					</div>
-				</li>
-			{/each}
-		</ul>
-	{/if}
+				{/if}
+			</div>
+		</ScrollArea.Viewport>
+		<ScrollArea.Scrollbar
+			orientation="vertical"
+			class="bg-muted hover:bg-dark-10 data-[state=visible]:animate-in data-[state=hidden]:animate-out data-[state=hidden]:fade-out-0 data-[state=visible]:fade-in-0 flex w-2.5 touch-none select-none rounded-full border-l border-l-transparent p-px transition-all duration-200 hover:w-3"
+		>
+			<ScrollArea.Thumb class="bg-muted-foreground flex-1 rounded-full" />
+		</ScrollArea.Scrollbar>
+		<ScrollArea.Scrollbar
+			orientation="horizontal"
+			class="bg-muted hover:bg-dark-10 flex h-2.5 touch-none select-none rounded-full border-t border-t-transparent p-px transition-all duration-200 hover:h-3 "
+		>
+			<ScrollArea.Thumb class="bg-muted-foreground rounded-full" />
+		</ScrollArea.Scrollbar>
+		<ScrollArea.Corner />
+	</ScrollArea.Root>
 </div>

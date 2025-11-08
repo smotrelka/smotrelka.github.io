@@ -1,7 +1,4 @@
 <script lang="ts">
-	import { Toaster } from '$lib/components/ui/sonner';
-	import { ModeWatcher } from 'mode-watcher';
-
 	import '../app.css';
 
 	let { children } = $props();
@@ -23,8 +20,5 @@
 	<meta name="apple-mobile-web-app-title" content="Смотрелка" />
 	<meta name="msapplication-TileColor" content="#6e11b0" />
 </svelte:head>
-
-<Toaster />
-<ModeWatcher />
 
 {@render children?.()}

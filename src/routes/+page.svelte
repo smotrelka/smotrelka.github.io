@@ -1,9 +1,6 @@
 <script lang="ts">
+	import { MeilisearchClient } from '$lib/meilisearch';
 	import { Search, Loader, ChevronLeft } from '@lucide/svelte';
-	import type { SearchResponse } from 'meilisearch';
-
-	const MEILI_URL = 'http://127.0.0.1:7700';
-	const MEILI_KEY = 'public_search_key';
 
 	let page: 'search' | 'watch' = $state('search');
 	let searchQuery = $state('');
@@ -28,51 +25,20 @@
 		timeout = setTimeout(() => searchTitles(q), 100);
 	});
 
+	const meili = new MeilisearchClient('http://127.0.0.1:7700');
+
 	async function searchTitles(q: string) {
 		if (!q.trim()) {
 			searchResults = [];
 			return;
 		}
 
-		if (controller) {
-			controller.abort();
-		}
+		const r = await meili.searchTitles(q, {
+			limit: 20,
+			offset: 0
+		});
 
-		const start = performance.now();
-
-		controller = new AbortController();
-		isSearching = true;
-
-		try {
-			const res = await fetch(`${MEILI_URL}/indexes/titles/search`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${MEILI_KEY}`
-				},
-				body: JSON.stringify({
-					q,
-					limit: 20
-				}),
-				signal: controller.signal
-			});
-
-			if (!res.ok) throw new Error(await res.text());
-
-			const data = (await res.json()) as SearchResponse<MeiliSearchTitle>;
-			searchResults = data.hits;
-		} catch (err) {
-			if ((err as any).name !== 'AbortError') {
-				console.error(err);
-				searchResults = [];
-			}
-		} finally {
-			const elapsed = performance.now() - start;
-			const minDuration = 300;
-			const delay = Math.max(0, minDuration - elapsed);
-
-			setTimeout(() => (isSearching = false), delay);
-		}
+		searchResults = r.hits;
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -275,30 +241,38 @@
 								<li>
 									<button
 										type="button"
-										class="group text-left cursor-pointer"
+										class="group text-left cursor-pointer outline-none"
 										onclick={(e) => {
 											e.preventDefault();
 											activeTitle = i;
 											page = 'watch';
 										}}
 									>
-										{#if i.cover}
-											<img
-												class="rounded-sm w-full"
-												src={i.cover}
-												alt={i.name_ru || i.name_en || i.original_name}
-											/>
-										{/if}
+										<span class="block">
+											{#if i.cover}
+												<img
+													class="rounded-sm w-full"
+													src={i.cover}
+													alt={i.name_ru || i.name_en || i.original_name}
+												/>
+											{/if}
+										</span>
 
-										<p class="font-medium line-clamp-2 mt-2 group-hover:text-violet-500">
+										<span class="font-medium line-clamp-2 mt-2 group-hover:text-violet-500">
 											{i.name_ru || i.name_en || i.original_name || i.alt_names?.[0]}
-										</p>
+										</span>
 
-										<div class="flex gap-2 mt-1 flex-wrap text-xs">
-											<div class="rounded-full px-2 py-1 bg-zinc-900 dark:bg-zinc-900">
+										<span class="flex gap-2 mt-1 flex-wrap text-xs">
+											<span class="rounded-full px-2 py-1 bg-zinc-900 dark:bg-zinc-900">
 												{i.year}
-											</div>
-										</div>
+											</span>
+
+											{#if i.category}
+												<span class="rounded-full px-2 py-1 bg-zinc-900 dark:bg-zinc-900">
+													{i.category}
+												</span>
+											{/if}
+										</span>
 									</button>
 								</li>
 							{/each}
@@ -315,15 +289,7 @@
 								onclick={(e) => {
 									e.preventDefault();
 									searchQuery = '#popular';
-								}}>Популярное за всё время</button
-							>
-							<button
-								type="button"
-								class="rounded-full border border-zinc-800 hover:border-zinc-700 select-none px-3 py-2"
-								onclick={(e) => {
-									e.preventDefault();
-									searchQuery = '#popular_24h';
-								}}>Популярное за 24ч</button
+								}}>🏆 Популярное</button
 							>
 							<button
 								type="button"
@@ -331,7 +297,7 @@
 								onclick={(e) => {
 									e.preventDefault();
 									searchQuery = '#hot';
-								}}>Сейчас смотрят</button
+								}}>🔥 Сейчас смотрят</button
 							>
 						</div>
 					</div>

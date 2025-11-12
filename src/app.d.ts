@@ -11,12 +11,20 @@ declare global {
 
 	interface MeiliSearchTitle {
 		id: number;
-		type: 'movie' | 'series';
 		original_name: string;
+		category?: string;
 		name_en?: string;
 		name_ru?: string;
 		alt_names?: string[];
 		year?: number;
+		imdb_id?: text;
+		kinopoisk_id?: number;
+		shikimori_id?: number;
+		worldart_id?: number;
+		provider?: string;
+		provider_id?: string;
+		tmdb_id?: text;
+		mydramalist_id?: text;
 		cover?: string;
 		description?: string;
 	}

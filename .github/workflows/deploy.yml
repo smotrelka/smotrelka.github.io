@@ -26,14 +26,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Create .env
-        run: |
-          echo "PUBLIC_MEILISEARCH_ENDPOINT=https://search.smotrelka.org" >> .env
-          echo "PUBLIC_MEILISEARCH_APIKEY=7ea4364936aee87d8b00d9e2d139b4890e758ea83bc59ef76652b93f766cf247" >> .env
-
       # 4. Build SvelteKit
       - name: Build SvelteKit
-        run: npm run build
+        env:
+          PUBLIC_MEILISEARCH_ENDPOINT: 'https://search.smotrelka.org'
+          PUBLIC_MEILISEARCH_APIKEY: '7ea4364936aee87d8b00d9e2d139b4890e758ea83bc59ef76652b93f766cf247'
+        run: |
+          npm run build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

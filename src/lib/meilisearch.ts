@@ -197,7 +197,14 @@ export class MeilisearchClient {
 			if (!h.provider) return;
 
 			const group = groups.get(root)!;
-			const ids = group.providers[h.provider as ProviderKey];
+
+			const key = this.normalizeProvider(h.provider);
+			if (!key) {
+				console.warn('Unknown provider', h.provider, h);
+				return;
+			}
+
+			const ids = group.providers[key];
 
 			const label =
 				[h.provider_title, h.title_ru, h.title_en, h.original_title, h.alt_titles?.[0]].find(
@@ -221,5 +228,16 @@ export class MeilisearchClient {
 			...hit,
 			provider_ids: providers
 		}));
+	}
+
+	private normalizeProvider(provider?: string): ProviderKey | undefined {
+		if (!provider) return undefined;
+
+		if (provider.startsWith('lumex')) return 'lumex';
+		if (provider.startsWith('kodik')) return 'kodik';
+		if (provider.startsWith('turbo')) return 'turbo';
+		if (provider.startsWith('flixcdn')) return 'flixcdn';
+
+		return undefined;
 	}
 }

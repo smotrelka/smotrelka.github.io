@@ -1,181 +1,170 @@
 <script lang="ts">
 	import { ChevronDown, ExternalLink } from '@lucide/svelte';
 
-	type ProviderKey = keyof ProviderIds;
-
-	interface ProviderConfig {
-		label: string;
-		baseUrl: string;
-		paramFormat: (source: string, id: string | number) => string;
+	interface Props {
+		embedUrl?: string | null;
+		providerIds: ProviderIds;
+		priorityOrder?: string[];
+		category?: string;
 	}
 
-	interface EmbedOption {
-		provider: string;
-		config: ProviderConfig;
-		source: ProviderKey;
-		id: string | number;
-		url: string;
-		displayLabel: string;
-		sortKey: string;
-	}
-
-	// Props
 	let {
 		embedUrl = $bindable(),
 		providerIds,
 		priorityOrder = ['turbo', 'lumex', 'kodik'],
 		category
-	}: {
-		embedUrl?: string | null;
-		providerIds: Record<string, ProviderIds>;
-		priorityOrder?: string[];
-		category?: string;
-	} = $props();
+	}: Props = $props();
 
-	// Provider configurations
-	const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
+	const PROVIDERS = {
 		kodik: {
 			label: 'Kodik',
-			baseUrl: 'https://kodik.cc/find-player?',
-			paramFormat: (source, id) => `${source}ID=${id}`
+			base: 'https://kodik.cc/find-player?',
+			param: (src: string, id: string | number) => `${src}ID=${id}`
 		},
 		lumex: {
 			label: 'Lumex',
-			baseUrl: 'https://p.lumex.cloud/f8GoATHamU0d?',
-			paramFormat: (source, id) => (source === 'imdb' ? `imdb_id=${id}` : `kp_id=${id}`)
+			base: 'https://p.lumex.cloud/f8GoATHamU0d?',
+			param: (src: string, id: string | number) =>
+				src === 'imdb' ? `imdb_id=${id}` : `kp_id=${id}`
 		},
 		turbo: {
 			label: 'Turbo',
-			baseUrl: 'https://52dce3a2.obrut.show/embed/0MTM?',
-			paramFormat: (source, id) => {
-				if (source === 'worldart') return `worldart_id=${id}`;
-				return source === 'imdb' ? `imdb_id=${id}` : `kinopoisk_id=${id}`;
-			}
+			base: 'https://52dce3a2.obrut.show/embed/0MTM?',
+			param: (src: string, id: string | number) =>
+				src === 'worldart'
+					? `worldart_id=${id}`
+					: src === 'imdb'
+						? `imdb_id=${id}`
+						: `kinopoisk_id=${id}`
 		},
 		flixcdn: {
 			label: 'FlixCDN',
-			baseUrl: 'https://player0.flixcdn.space/show/',
-			paramFormat: (source, id) => `${source}/${id}`
+			base: 'https://player0.flixcdn.space/show/',
+			param: (src: string, id: string | number) => `${src}/${id}`
 		}
-	};
+	} as const;
 
-	const SOURCE_LABELS: Record<ProviderKey, string> = {
-		imdb: 'IMDB',
-		kinopoisk: 'КиноПоиск',
-		shikimori: 'Shikimori',
-		tmdb: 'TMDB',
-		mydramalist: 'MyDramaList',
-		worldart: 'World-Art'
-	};
-
-	const SOURCE_LINKS: Record<ProviderKey, (id: string | number) => string> = {
-		imdb: (id) => `https://www.imdb.com/title/${id}/`,
-		kinopoisk: (id) => `https://www.kinopoisk.ru/film/${id}/`,
-		shikimori: (id) => `https://shikimori.one/animes/${id}`,
-		tmdb: (id) => `https://www.themoviedb.org/movie/${id}`,
-		mydramalist: (id) => `https://mydramalist.com/${id}`,
-		worldart: (id) => {
-			const isAnime =
-				category === 'anime' ||
-				category === 'anime_series' ||
-				Object.values(providerIds).some((ids) => ids.shikimori?.length > 0);
-			return `http://www.world-art.ru/${isAnime ? 'animation/animation.php' : 'cinema/cinema.php'}?id=${id}`;
+	const SOURCES = {
+		imdb: { label: 'IMDB', link: (id: string | number) => `https://www.imdb.com/title/${id}/` },
+		kinopoisk: {
+			label: 'КиноПоиск',
+			link: (id: string | number) => `https://www.kinopoisk.ru/film/${id}/`
+		},
+		shikimori: {
+			label: 'Shikimori',
+			link: (id: string | number) => `https://shikimori.one/animes/${id}`
+		},
+		tmdb: {
+			label: 'TMDB',
+			link: (id: string | number) => `https://www.themoviedb.org/movie/${id}`
+		},
+		mydramalist: {
+			label: 'MyDramaList',
+			link: (id: string | number) => `https://mydramalist.com/${id}`
+		},
+		worldart: {
+			label: 'World-Art',
+			link: (id: string | number) => {
+				const isAnime =
+					category?.includes('anime') ||
+					Object.values(providerIds).some((ids) => ids.shikimori?.length);
+				return `http://www.world-art.ru/${isAnime ? 'animation/animation.php' : 'cinema/cinema.php'}?id=${id}`;
+			}
 		}
-	};
+	} as const;
 
-	// Build all embed options
-	const embedOptions = $derived.by(() => {
-		const options: EmbedOption[] = [];
+	// Build options grouped by provider
+	const options = $derived.by(() => {
+		const groups = new Map<
+			string,
+			Array<{ label: string; url: string; sourceKey: SourceKey; id: string | number }>
+		>();
 
-		for (const [provider, ids] of Object.entries(providerIds)) {
-			const config = PROVIDER_CONFIGS[provider.startsWith('lumex:') ? 'lumex' : provider];
-			if (!config) continue;
+		for (const [providerKey, ids] of Object.entries(providerIds)) {
+			const providerName = providerKey.startsWith('lumex:') ? 'lumex' : providerKey;
+			const provider = PROVIDERS[providerName as keyof typeof PROVIDERS];
+			if (!provider) continue;
 
-			const priority = priorityOrder.indexOf(provider);
-			const priorityNum = priority === -1 ? 999 : priority;
+			const priority = priorityOrder.indexOf(providerKey);
+			const sortKey = priority === -1 ? `999_${providerName}` : `${priority}_${providerName}`;
 
-			for (const [source, items] of Object.entries(ids)) {
+			for (const [sourceKey, items] of Object.entries(ids)) {
 				if (!items?.length) continue;
 
 				for (const item of items) {
 					const id = typeof item === 'object' ? item.id : item;
-					const displayLabel = typeof item === 'object' && item.label ? item.label : String(id);
-					const url = `${config.baseUrl}${config.paramFormat(source, id)}`;
+					const label = typeof item === 'object' && item.label ? item.label : String(id);
+					const url = provider.base + provider.param(sourceKey, id);
 
-					options.push({
-						provider,
-						config,
-						source: source as ProviderKey,
-						id,
+					if (!groups.has(sortKey)) {
+						groups.set(sortKey, []);
+					}
+					groups.get(sortKey)!.push({
+						label,
 						url,
-						displayLabel,
-						sortKey: `${priorityNum}_${displayLabel.toLowerCase()}`
+						sourceKey: sourceKey as SourceKey,
+						id
 					});
 				}
 			}
 		}
 
-		return options.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+		return Array.from(groups.entries())
+			.sort(([a], [b]) => a.localeCompare(b))
+			.map(([key, items]) => {
+				const providerName = key.split('_')[1];
+				return {
+					provider: PROVIDERS[providerName as keyof typeof PROVIDERS]?.label || providerName,
+					items
+				};
+			});
 	});
 
-	// Group options by source
-	const groupedOptions = $derived(
-		embedOptions.reduce(
-			(acc, option) => {
-				if (!acc[option.source]) acc[option.source] = [];
-				acc[option.source].push(option);
-				return acc;
-			},
-			{} as Record<ProviderKey, EmbedOption[]>
-		)
-	);
+	// Find selected option for external link
+	const selected = $derived(options.flatMap((g) => g.items).find((opt) => opt.url === embedUrl));
 
-	// Get selected option directly from embedUrl
-	const selected = $derived(embedOptions.find((opt) => opt.url === embedUrl));
-
-	// Initialize embedUrl with first option
+	// Initialize with first option
 	$effect(() => {
-		if (!embedUrl && embedOptions.length > 0) {
-			embedUrl = embedOptions[0].url;
+		if (!embedUrl && options[0]?.items[0]) {
+			embedUrl = options[0].items[0].url;
 		}
 	});
 </script>
 
-<div class="flex gap-2">
-	<div class="relative inline-flex">
-		<select
-			class="bg-zinc-900 min-w-0 text-ellipsis appearance-none w-full rounded-md px-3 pr-10 py-2"
-			name="provider"
-			bind:value={embedUrl}
-		>
-			{#each Object.entries(groupedOptions) as [source, options]}
-				<optgroup label={SOURCE_LABELS[source as ProviderKey] || source.toUpperCase()}>
-					{#each options as option}
-						<option value={option.url}>
-							[{option.config.label}] {option.displayLabel}
-						</option>
-					{/each}
-				</optgroup>
-			{/each}
-		</select>
-
-		<span class="absolute top-1/2 right-0 -translate-y-1/2 px-3 pointer-events-none">
-			<ChevronDown size={16} />
-		</span>
-	</div>
-
-	{#if selected}
-		{@const externalLink = SOURCE_LINKS[selected.source]?.(selected.id)}
-		{#if externalLink}
-			<a
-				href={externalLink}
-				target="_blank"
-				rel="noopener noreferrer"
-				class="inline-flex shrink-0 items-center gap-1 p-2 text-sm text-blue-400 hover:text-blue-300 transition-colors border rounded-md border-zinc-900"
+<div class="p-4 sm:p-0">
+	<div class="flex gap-2 flex-wrap">
+		<div class="relative inline-flex text-ellipsis not-sm:w-full">
+			<select
+				bind:value={embedUrl}
+				class="bg-zinc-900 text-ellipsis not-sm:w-full appearance-none rounded-md px-3 pr-10 py-2 min-w-0"
 			>
-				<ExternalLink size={16} />
-				<span>{SOURCE_LABELS[selected.source]}</span>
-			</a>
+				{#each options as group}
+					<optgroup label={group.provider}>
+						{#each group.items as option}
+							<option value={option.url}>{option.label}</option>
+						{/each}
+					</optgroup>
+				{/each}
+			</select>
+
+			<span class="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none">
+				<ChevronDown size={16} />
+			</span>
+		</div>
+
+		{#if selected}
+			{@const link = SOURCES[selected.sourceKey]?.link(selected.id)}
+			{#if link}
+				<a
+					href={link}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="inline-flex shrink-0 items-center gap-1 p-2 text-sm text-blue-400 hover:text-blue-300 transition-colors border border-zinc-900 rounded-md"
+				>
+					<ExternalLink size={16} />
+					<span>{SOURCES[selected.sourceKey].label}</span>
+				</a>
+			{/if}
 		{/if}
-	{/if}
+	</div>
 </div>

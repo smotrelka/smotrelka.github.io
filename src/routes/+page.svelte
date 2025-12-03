@@ -2,6 +2,7 @@
 	import { PUBLIC_MEILISEARCH_APIKEY, PUBLIC_MEILISEARCH_ENDPOINT } from '$env/static/public';
 	import Card from '$lib/components/Card.svelte';
 	import Masonry from '$lib/components/Masonry.svelte';
+	import Player from '$lib/components/Player.svelte';
 	import ProviderSelect from '$lib/components/ProviderSelect.svelte';
 	import { MeilisearchClient } from '$lib/meilisearch';
 	import { Search, Loader, ChevronLeft, Image, ChevronDown } from '@lucide/svelte';
@@ -188,16 +189,7 @@
 				class="overflow-hidden rounded-lg"
 				style="position: relative; width: 100%; padding-top: 57%; background: #000;"
 			>
-				<iframe
-					title="title"
-					style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
-					width="100%"
-					height="100%"
-					src={embedUrl}
-					frameborder="0"
-					allowfullscreen
-					allow="autoplay *; fullscreen *"
-				></iframe>
+				<Player {embedUrl} />
 			</div>
 		</div>
 	</div>
@@ -213,8 +205,8 @@
 								onclick={(e) => {
 									e.preventDefault();
 									activeTitle = item;
+									embedUrl = null;
 									page = 'watch';
-									console.log(activeTitle);
 								}}
 							/>
 						{/each}

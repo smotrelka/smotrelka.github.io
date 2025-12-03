@@ -116,161 +116,110 @@ export class MeilisearchClient {
 	}
 
 	private groupDuplicates(hits: Media[]): EnrichedMedia[] {
-		// Union-Find helper
+		// union-find
 		const parent = new Map<number, number>();
 		const find = (i: number): number => {
-			if (parent.get(i) !== i) {
-				parent.set(i, find(parent.get(i)!));
-			}
+			if (parent.get(i) !== i) parent.set(i, find(parent.get(i)!));
 			return parent.get(i)!;
 		};
-		const union = (i: number, j: number) => {
-			parent.set(find(i), find(j));
-		};
+		const union = (i: number, j: number) => parent.set(find(i), find(j));
 
-		// Initialize each hit as its own group
 		hits.forEach((_, i) => parent.set(i, i));
 
-		// Build ID-to-indices maps
-		const idMaps = {
-			imdb: new Map<string, number[]>(),
-			kinopoisk: new Map<string, number[]>(),
-			tmdb: new Map<string, number[]>(),
-			mydramalist: new Map<string, number[]>(),
-			shikimori: new Map<string, number[]>(),
-			worldart: new Map<string, number[]>()
+		// maps for dedupe
+		const maps: Record<SourceKey, Map<string, number[]>> = {
+			imdb: new Map(),
+			kinopoisk: new Map(),
+			shikimori: new Map(),
+			tmdb: new Map(),
+			mydramalist: new Map(),
+			worldart: new Map()
 		};
 
-		hits.forEach((hit, i) => {
-			if (hit.imdb_id) {
-				if (!idMaps.imdb.has(hit.imdb_id)) idMaps.imdb.set(hit.imdb_id, []);
-				idMaps.imdb.get(hit.imdb_id)!.push(i);
-			}
-			if (hit.kinopoisk_id) {
-				if (!idMaps.kinopoisk.has(String(hit.kinopoisk_id)))
-					idMaps.kinopoisk.set(String(hit.kinopoisk_id), []);
-				idMaps.kinopoisk.get(String(hit.kinopoisk_id))!.push(i);
-			}
-			if (hit.tmdb_id) {
-				if (!idMaps.tmdb.has(hit.tmdb_id)) idMaps.tmdb.set(hit.tmdb_id, []);
-				idMaps.tmdb.get(hit.tmdb_id)!.push(i);
-			}
-			if (hit.mydramalist_id) {
-				if (!idMaps.mydramalist.has(hit.mydramalist_id))
-					idMaps.mydramalist.set(hit.mydramalist_id, []);
-				idMaps.mydramalist.get(hit.mydramalist_id)!.push(i);
-			}
-			if (hit.shikimori_id) {
-				if (!idMaps.shikimori.has(String(hit.shikimori_id)))
-					idMaps.shikimori.set(String(hit.shikimori_id), []);
-				idMaps.shikimori.get(String(hit.shikimori_id))!.push(i);
-			}
-			if (hit.worldart_id) {
-				if (!idMaps.worldart.has(String(hit.worldart_id)))
-					idMaps.worldart.set(String(hit.worldart_id), []);
-				idMaps.worldart.get(String(hit.worldart_id))!.push(i);
-			}
+		const pushMap = (key: SourceKey, val?: string | number | null, idx?: number) => {
+			if (!val) return;
+			const s = String(val);
+			if (!maps[key].has(s)) maps[key].set(s, []);
+			maps[key].get(s)!.push(idx!);
+		};
+
+		hits.forEach((h, i) => {
+			pushMap('imdb', h.imdb_id, i);
+			pushMap('kinopoisk', h.kinopoisk_id, i);
+			pushMap('tmdb', h.tmdb_id, i);
+			pushMap('mydramalist', h.mydramalist_id, i);
+			pushMap('shikimori', h.shikimori_id, i);
+			pushMap('worldart', h.worldart_id, i);
 		});
 
-		// Union all hits that share any ID
-		Object.values(idMaps).forEach((map) => {
-			map.forEach((indices) => {
-				for (let i = 1; i < indices.length; i++) {
-					union(indices[0], indices[i]);
-				}
-			});
-		});
+		Object.values(maps).forEach((map) =>
+			map.forEach((arr) => arr.reduce((a, b) => (union(a, b), a), arr[0]))
+		);
 
-		// Group by root parent
-		const groups = new Map<number, { hit: Media; idsByProvider: Map<string, ProviderIds> }>();
+		// build enriched
+		const groups = new Map<number, { hit: Media; providers: ProviderIds }>();
 
-		hits.forEach((hit, i) => {
+		hits.forEach((h, i) => {
 			const root = find(i);
 
 			if (!groups.has(root)) {
-				groups.set(root, {
-					hit,
-					idsByProvider: new Map()
-				});
-			}
-
-			const group = groups.get(root)!;
-
-			if (hit.provider) {
-				if (!group.idsByProvider.has(hit.provider)) {
-					group.idsByProvider.set(hit.provider, {
+				const empty: ProviderIds = {
+					kodik: {
 						imdb: [],
 						kinopoisk: [],
+						shikimori: [],
 						tmdb: [],
 						mydramalist: [],
-						shikimori: [],
 						worldart: []
-					});
-				}
+					},
+					turbo: {
+						imdb: [],
+						kinopoisk: [],
+						shikimori: [],
+						tmdb: [],
+						mydramalist: [],
+						worldart: []
+					},
+					flixcdn: {
+						imdb: [],
+						kinopoisk: [],
+						shikimori: [],
+						tmdb: [],
+						mydramalist: [],
+						worldart: []
+					},
+					lumex: { imdb: [], kinopoisk: [], shikimori: [], tmdb: [], mydramalist: [], worldart: [] }
+				};
 
-				const providerIds = group.idsByProvider.get(hit.provider)!;
-
-				const labelParts: string[] = [];
-				const title =
-					hit.provider_title ||
-					hit.title_ru ||
-					hit.title_en ||
-					hit.original_title ||
-					hit.alt_titles?.[0];
-
-				if (title) {
-					labelParts.push(title);
-				} else {
-					labelParts.push('-');
-				}
-
-				if (hit.year) {
-					labelParts.push(`(${hit.year})`);
-				}
-
-				const label = labelParts.join(' ');
-
-				if (hit.imdb_id && providerIds.imdb.findIndex((i) => i.id === hit.imdb_id) === -1) {
-					providerIds.imdb.push({ id: hit.imdb_id, label });
-				}
-
-				if (
-					hit.kinopoisk_id &&
-					providerIds.kinopoisk.findIndex((i) => i.id === hit.kinopoisk_id) === -1
-				) {
-					providerIds.kinopoisk.push({ id: hit.kinopoisk_id, label });
-				}
-
-				if (
-					hit.shikimori_id &&
-					providerIds.shikimori.findIndex((i) => i.id === hit.shikimori_id) === -1
-				) {
-					providerIds.shikimori.push({ id: hit.shikimori_id, label });
-				}
-
-				if (
-					hit.mydramalist_id &&
-					providerIds.mydramalist.findIndex((i) => i.id === hit.mydramalist_id) === -1
-				) {
-					providerIds.mydramalist.push({ id: hit.mydramalist_id, label });
-				}
-
-				if (
-					hit.worldart_id &&
-					providerIds.worldart.findIndex((i) => i.id === hit.worldart_id) === -1
-				) {
-					providerIds.worldart.push({ id: hit.worldart_id, label });
-				}
-
-				if (hit.tmdb_id && providerIds.tmdb.findIndex((i) => i.id === hit.tmdb_id) === -1) {
-					providerIds.tmdb.push({ id: hit.tmdb_id, label });
-				}
+				groups.set(root, { hit: h, providers: empty });
 			}
+
+			if (!h.provider) return;
+
+			const group = groups.get(root)!;
+			const ids = group.providers[h.provider as ProviderKey];
+
+			const label =
+				[h.provider_title, h.title_ru, h.title_en, h.original_title, h.alt_titles?.[0]].find(
+					Boolean
+				) || '-' + (h.year ? ` (${h.year})` : '');
+
+			const push = (key: SourceKey, val?: string | number | null) => {
+				if (!val) return;
+				if (!ids[key].some((i) => i.id === val)) ids[key].push({ id: val, label });
+			};
+
+			push('imdb', h.imdb_id);
+			push('kinopoisk', h.kinopoisk_id);
+			push('shikimori', h.shikimori_id);
+			push('tmdb', h.tmdb_id);
+			push('mydramalist', h.mydramalist_id);
+			push('worldart', h.worldart_id);
 		});
 
-		return Array.from(groups.values()).map(({ hit, idsByProvider }) => ({
+		return [...groups.values()].map(({ hit, providers }) => ({
 			...hit,
-			provider_ids: Object.fromEntries(idsByProvider)
+			provider_ids: providers
 		}));
 	}
 }

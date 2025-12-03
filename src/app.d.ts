@@ -9,6 +9,9 @@ declare global {
 		// interface Platform {}
 	}
 
+	type SourceKey = 'imdb' | 'kinopoisk' | 'shikimori' | 'tmdb' | 'mydramalist' | 'worldart';
+	type ProviderKey = 'kodik' | 'turbo' | 'flixcdn' | 'lumex';
+
 	interface Media {
 		id: number;
 		category?: string;
@@ -32,22 +35,13 @@ declare global {
 	}
 
 	interface EnrichedMedia extends Media {
-		provider_ids: Record<string, ProviderIds>;
+		provider_ids: ProviderIds;
 	}
 
-	interface ProviderIds {
-		imdb: ProviderId<string>[];
-		kinopoisk: ProviderId<number>[];
-		tmdb: ProviderId<string>[];
-		mydramalist: ProviderId<string>[];
-		shikimori: ProviderId<number>[];
-		worldart: ProviderId<number>[];
-	}
-
-	interface ProviderId<T> {
-		id: T;
-		label?: string;
-	}
+	type ProviderIds = Record<
+		ProviderKey,
+		Record<SourceKey, Array<{ id: number | string; label?: string }>>
+	>;
 }
 
 export {};

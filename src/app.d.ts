@@ -9,24 +9,44 @@ declare global {
 		// interface Platform {}
 	}
 
-	interface MeiliSearchTitle {
+	interface Media {
 		id: number;
-		original_name: string;
 		category?: string;
-		name_en?: string;
-		name_ru?: string;
-		alt_names?: string[];
+		original_title?: string;
+		provider_title?: string;
+		title_en?: string;
+		title_ru?: string;
+		alt_titles?: string[];
 		year?: number;
 		imdb_id?: text;
 		kinopoisk_id?: number;
+		kinopoisk_cover?: string;
 		shikimori_id?: number;
+		shikimori_cover?: string;
+		mydramalist_cover?: string;
 		worldart_id?: number;
 		provider?: string;
-		provider_id?: string;
 		tmdb_id?: text;
 		mydramalist_id?: text;
-		cover?: string;
 		description?: string;
+	}
+
+	interface EnrichedMedia extends Media {
+		provider_ids: Record<string, ProviderIds>;
+	}
+
+	interface ProviderIds {
+		imdb: ProviderId<string>[];
+		kinopoisk: ProviderId<number>[];
+		tmdb: ProviderId<string>[];
+		mydramalist: ProviderId<string>[];
+		shikimori: ProviderId<number>[];
+		worldart: ProviderId<number>[];
+	}
+
+	interface ProviderId<T> {
+		id: T;
+		label?: string;
 	}
 }
 

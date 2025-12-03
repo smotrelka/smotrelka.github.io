@@ -19,7 +19,7 @@ jobs:
           node-version: 24
 
       - run: npm ci
-      - run: npm run build
+      - run: PUBLIC_MEILISEARCH_ENDPOINT=https://search.smotrelka.org PUBLIC_MEILISEARCH_APIKEY=7ea4364936aee87d8b00d9e2d139b4890e758ea83bc59ef76652b93f766cf247 npm run build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

@@ -132,12 +132,12 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<header class="bg-zinc-900 flex items-center h-16 z-10 sticky top-0">
-	<div class="max-w-5xl mx-auto w-full px-4 flex gap-2">
+<header class="sticky top-0 z-10 flex h-16 items-center bg-zinc-900/60 backdrop-blur-lg">
+	<div class="mx-auto flex w-full max-w-5xl gap-2 px-4">
 		{#if page !== 'watch' && activeTitle}
 			<button
 				type="button"
-				class="rounded-md cursor-pointer hover:bg-zinc-700 duration-75 active:scale-95 transition-transform bg-zinc-800 p-2"
+				class="cursor-pointer rounded-md bg-zinc-800 p-2 transition-transform duration-75 hover:bg-zinc-700 active:scale-95"
 				onclick={(e) => {
 					e.preventDefault();
 					page = 'watch';
@@ -154,7 +154,7 @@
 				autocomplete="off"
 				autocorrect="off"
 				autocapitalize="off"
-				class="w-full min-w-0 rounded-md bg-zinc-800 px-3 py-2 text-sm outline-none text-ellipsis disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 focus-visible:border-violet-500 focus-visible:ring-violet-500/50 focus-visible:ring-3 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none peer ps-9 pe-9"
+				class="peer w-full min-w-0 rounded-md bg-zinc-800 px-3 py-2 ps-9 pe-9 text-sm text-ellipsis outline-none focus-visible:border-violet-500 focus-visible:ring-3 focus-visible:ring-violet-500/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
 				placeholder="начните вводить название&mldr;"
 				bind:value={searchQuery}
 				bind:this={searchInputEl}
@@ -176,7 +176,7 @@
 
 <main class="">
 	<div hidden={page === 'watch' ? false : true}>
-		<div class="max-w-5xl mx-auto w-full sm:p-4 space-y-4">
+		<div class="mx-auto w-full max-w-5xl space-y-4 sm:p-4">
 			{#if activeTitle}
 				<ProviderSelect
 					bind:embedUrl
@@ -195,7 +195,7 @@
 	</div>
 
 	<div hidden={page === 'search' ? false : true}>
-		<div class="max-w-5xl mx-auto w-full p-4">
+		<div class="mx-auto w-full max-w-5xl p-4">
 			{#if searchQuery.trim().length}
 				{#if searchResults.length}
 					<Masonry>
@@ -219,7 +219,7 @@
 					<div class="flex flex-wrap gap-2 text-xs">
 						<button
 							type="button"
-							class="rounded-full border border-zinc-800 hover:border-zinc-700 select-none px-3 py-2"
+							class="rounded-full border border-zinc-800 px-3 py-2 select-none hover:border-zinc-700"
 							onclick={(e) => {
 								e.preventDefault();
 								searchQuery = '#popular';
@@ -227,7 +227,7 @@
 						>
 						<button
 							type="button"
-							class="rounded-full border border-zinc-800 hover:border-zinc-700 select-none px-3 py-2"
+							class="rounded-full border border-zinc-800 px-3 py-2 select-none hover:border-zinc-700"
 							onclick={(e) => {
 								e.preventDefault();
 								searchQuery = '#hot';

@@ -73,20 +73,20 @@
 		}
 	} as const;
 
-	// Build options grouped by provider
 	const options = $derived.by(() => {
-		const groups = new Map<
-			string,
-			Array<{ label: string; url: string; sourceKey: SourceKey; id: string | number }>
-		>();
+		const allItems: Array<{
+			label: string;
+			url: string;
+			providerKey: string;
+			providerLabel: string;
+			sourceKey: SourceKey;
+			id: string | number;
+		}> = [];
 
-		for (const [providerKey, ids] of Object.entries(providerIds)) {
-			const providerName = providerKey.startsWith('lumex:') ? 'lumex' : providerKey;
-			const provider = PROVIDERS[providerName as keyof typeof PROVIDERS];
+		for (const [providerKeyRaw, ids] of Object.entries(providerIds)) {
+			const providerKey = providerKeyRaw.startsWith('lumex') ? 'lumex' : providerKeyRaw;
+			const provider = PROVIDERS[providerKey as keyof typeof PROVIDERS];
 			if (!provider) continue;
-
-			const priority = priorityOrder.indexOf(providerKey);
-			const sortKey = priority === -1 ? `999_${providerName}` : `${priority}_${providerName}`;
 
 			for (const [sourceKey, items] of Object.entries(ids)) {
 				if (!items?.length) continue;
@@ -96,12 +96,11 @@
 					const label = typeof item === 'object' && item.label ? item.label : String(id);
 					const url = provider.base + provider.param(sourceKey, id);
 
-					if (!groups.has(sortKey)) {
-						groups.set(sortKey, []);
-					}
-					groups.get(sortKey)!.push({
+					allItems.push({
 						label,
 						url,
+						providerKey,
+						providerLabel: provider.label,
 						sourceKey: sourceKey as SourceKey,
 						id
 					});
@@ -109,21 +108,28 @@
 			}
 		}
 
-		return Array.from(groups.entries())
-			.sort(([a], [b]) => a.localeCompare(b))
-			.map(([key, items]) => {
-				const providerName = key.split('_')[1];
-				return {
-					provider: PROVIDERS[providerName as keyof typeof PROVIDERS]?.label || providerName,
-					items
-				};
-			});
+		allItems.sort((a, b) => a.label.localeCompare(b.label));
+
+		const groupsMap = new Map<string, typeof allItems>();
+		for (const item of allItems) {
+			if (!groupsMap.has(item.providerKey)) groupsMap.set(item.providerKey, []);
+			groupsMap.get(item.providerKey)!.push(item);
+		}
+
+		return Array.from(groupsMap.entries())
+			.sort(([a], [b]) => {
+				const pa = priorityOrder.indexOf(a);
+				const pb = priorityOrder.indexOf(b);
+				return (pa === -1 ? 999 : pa) - (pb === -1 ? 999 : pb);
+			})
+			.map(([_, items]) => ({
+				provider: items[0].providerLabel,
+				items
+			}));
 	});
 
-	// Find selected option for external link
 	const selected = $derived(options.flatMap((g) => g.items).find((opt) => opt.url === embedUrl));
 
-	// Initialize with first option
 	$effect(() => {
 		if (!embedUrl && options[0]?.items[0]) {
 			embedUrl = options[0].items[0].url;
@@ -132,11 +138,11 @@
 </script>
 
 <div class="p-4 sm:p-0">
-	<div class="flex gap-2 flex-wrap">
+	<div class="flex flex-wrap gap-2">
 		<div class="relative inline-flex text-ellipsis not-sm:w-full">
 			<select
 				bind:value={embedUrl}
-				class="bg-zinc-900 text-ellipsis not-sm:w-full appearance-none rounded-md px-3 pr-10 py-2 min-w-0"
+				class="min-w-0 appearance-none rounded-md bg-zinc-900 px-3 py-2 pr-10 text-ellipsis not-sm:w-full"
 			>
 				{#each options as group}
 					<optgroup label={group.provider}>
@@ -147,7 +153,7 @@
 				{/each}
 			</select>
 
-			<span class="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none">
+			<span class="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2">
 				<ChevronDown size={16} />
 			</span>
 		</div>
@@ -159,7 +165,7 @@
 					href={link}
 					target="_blank"
 					rel="noopener noreferrer"
-					class="inline-flex shrink-0 items-center gap-1 p-2 text-sm text-blue-400 hover:text-blue-300 transition-colors border border-zinc-900 rounded-md"
+					class="inline-flex shrink-0 items-center gap-1 rounded-md border border-zinc-900 p-2 text-sm text-blue-400 transition-colors hover:text-blue-300"
 				>
 					<ExternalLink size={16} />
 					<span>{SOURCES[selected.sourceKey].label}</span>

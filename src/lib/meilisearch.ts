@@ -21,6 +21,8 @@ export interface MeilisearchResponse<T = unknown> {
 	estimatedTotalHits: number;
 }
 
+const SOURCE_KEYS = ['imdb', 'kinopoisk', 'shikimori', 'tmdb', 'mydramalist', 'worldart'] as const;
+
 export class MeilisearchClient {
 	private baseUrl: string;
 	private apiKey?: string;
@@ -77,10 +79,7 @@ export class MeilisearchClient {
 			headers['Authorization'] = `Bearer ${this.apiKey}`;
 		}
 
-		const body = {
-			q: query,
-			...params
-		};
+		const body = { q: query, ...params };
 
 		try {
 			const response = await fetch(url, {
@@ -116,128 +115,120 @@ export class MeilisearchClient {
 	}
 
 	private groupDuplicates(hits: Media[]): EnrichedMedia[] {
-		// union-find
-		const parent = new Map<number, number>();
+		if (hits.length === 0) return [];
+
+		const parent = new Int32Array(hits.length);
+		for (let i = 0; i < hits.length; i++) parent[i] = i;
+
 		const find = (i: number): number => {
-			if (parent.get(i) !== i) parent.set(i, find(parent.get(i)!));
-			return parent.get(i)!;
-		};
-		const union = (i: number, j: number) => parent.set(find(i), find(j));
-
-		hits.forEach((_, i) => parent.set(i, i));
-
-		// maps for dedupe
-		const maps: Record<SourceKey, Map<string, number[]>> = {
-			imdb: new Map(),
-			kinopoisk: new Map(),
-			shikimori: new Map(),
-			tmdb: new Map(),
-			mydramalist: new Map(),
-			worldart: new Map()
+			if (parent[i] !== i) parent[i] = find(parent[i]);
+			return parent[i];
 		};
 
-		const pushMap = (key: SourceKey, val?: string | number | null, idx?: number) => {
-			if (!val) return;
-			const s = String(val);
-			if (!maps[key].has(s)) maps[key].set(s, []);
-			maps[key].get(s)!.push(idx!);
+		const union = (i: number, j: number) => {
+			parent[find(i)] = find(j);
 		};
+
+		const idMaps = SOURCE_KEYS.map(() => new Map<string, number[]>());
 
 		hits.forEach((h, i) => {
-			pushMap('imdb', h.imdb_id, i);
-			pushMap('kinopoisk', h.kinopoisk_id, i);
-			pushMap('tmdb', h.tmdb_id, i);
-			pushMap('mydramalist', h.mydramalist_id, i);
-			pushMap('shikimori', h.shikimori_id, i);
-			pushMap('worldart', h.worldart_id, i);
+			const ids = [
+				h.imdb_id,
+				h.kinopoisk_id,
+				h.shikimori_id,
+				h.tmdb_id,
+				h.mydramalist_id,
+				h.worldart_id
+			];
+			ids.forEach((id, idx) => {
+				if (id) {
+					const key = String(id);
+					const map = idMaps[idx];
+					if (!map.has(key)) map.set(key, []);
+					map.get(key)!.push(i);
+				}
+			});
 		});
 
-		Object.values(maps).forEach((map) =>
-			map.forEach((arr) => arr.reduce((a, b) => (union(a, b), a), arr[0]))
-		);
+		idMaps.forEach((map) => {
+			map.forEach((indices) => {
+				for (let i = 1; i < indices.length; i++) {
+					union(indices[0], indices[i]);
+				}
+			});
+		});
 
-		// build enriched
+		const normalizeProvider = (provider?: string): ProviderKey | undefined => {
+			if (!provider) return undefined;
+			if (provider.startsWith('lumex')) return 'lumex';
+			if (provider.startsWith('kodik')) return 'kodik';
+			if (provider.startsWith('turbo')) return 'turbo';
+			if (provider.startsWith('flixcdn')) return 'flixcdn';
+			return undefined;
+		};
+
+		const createEmptyProviderIds = (): ProviderIds => {
+			const createSourceIds = () => ({
+				imdb: [],
+				kinopoisk: [],
+				shikimori: [],
+				tmdb: [],
+				mydramalist: [],
+				worldart: []
+			});
+
+			return {
+				kodik: createSourceIds(),
+				turbo: createSourceIds(),
+				flixcdn: createSourceIds(),
+				lumex: createSourceIds()
+			};
+		};
+
 		const groups = new Map<number, { hit: Media; providers: ProviderIds }>();
 
 		hits.forEach((h, i) => {
 			const root = find(i);
 
 			if (!groups.has(root)) {
-				const empty: ProviderIds = {
-					kodik: {
-						imdb: [],
-						kinopoisk: [],
-						shikimori: [],
-						tmdb: [],
-						mydramalist: [],
-						worldart: []
-					},
-					turbo: {
-						imdb: [],
-						kinopoisk: [],
-						shikimori: [],
-						tmdb: [],
-						mydramalist: [],
-						worldart: []
-					},
-					flixcdn: {
-						imdb: [],
-						kinopoisk: [],
-						shikimori: [],
-						tmdb: [],
-						mydramalist: [],
-						worldart: []
-					},
-					lumex: { imdb: [], kinopoisk: [], shikimori: [], tmdb: [], mydramalist: [], worldart: [] }
-				};
-
-				groups.set(root, { hit: h, providers: empty });
+				groups.set(root, { hit: h, providers: createEmptyProviderIds() });
 			}
 
-			if (!h.provider) return;
+			const providerKey = normalizeProvider(h.provider);
+			if (!providerKey) return;
 
 			const group = groups.get(root)!;
-
-			const key = this.normalizeProvider(h.provider);
-			if (!key) {
-				console.warn('Unknown provider', h.provider, h);
-				return;
-			}
-
-			const ids = group.providers[key];
-
 			const label =
-				[h.provider_title, h.title_ru, h.title_en, h.original_title, h.alt_titles?.[0]].find(
-					Boolean
-				) || '-' + (h.year ? ` (${h.year})` : '');
+				h.provider_title ||
+				h.title_ru ||
+				h.title_en ||
+				h.original_title ||
+				h.alt_titles?.[0] ||
+				'-' + (h.year ? ` (${h.year})` : '');
 
-			const push = (key: SourceKey, val?: string | number | null) => {
-				if (!val) return;
-				if (!ids[key].some((i) => i.id === val)) ids[key].push({ id: val, label });
-			};
+			const sourceIds = [
+				h.imdb_id,
+				h.kinopoisk_id,
+				h.shikimori_id,
+				h.tmdb_id,
+				h.mydramalist_id,
+				h.worldart_id
+			];
 
-			push('imdb', h.imdb_id);
-			push('kinopoisk', h.kinopoisk_id);
-			push('shikimori', h.shikimori_id);
-			push('tmdb', h.tmdb_id);
-			push('mydramalist', h.mydramalist_id);
-			push('worldart', h.worldart_id);
+			SOURCE_KEYS.forEach((sourceKey, idx) => {
+				const val = sourceIds[idx];
+				if (val) {
+					const arr = group.providers[providerKey][sourceKey];
+					if (!arr.some((item) => item.id === val)) {
+						arr.push({ id: val, label });
+					}
+				}
+			});
 		});
 
-		return [...groups.values()].map(({ hit, providers }) => ({
+		return Array.from(groups.values(), ({ hit, providers }) => ({
 			...hit,
 			provider_ids: providers
 		}));
-	}
-
-	private normalizeProvider(provider?: string): ProviderKey | undefined {
-		if (!provider) return undefined;
-
-		if (provider.startsWith('lumex')) return 'lumex';
-		if (provider.startsWith('kodik')) return 'kodik';
-		if (provider.startsWith('turbo')) return 'turbo';
-		if (provider.startsWith('flixcdn')) return 'flixcdn';
-
-		return undefined;
 	}
 }

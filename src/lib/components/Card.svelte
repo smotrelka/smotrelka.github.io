@@ -14,14 +14,22 @@
 	const cover = $derived(item.mydramalist_cover || item.shikimori_cover || item.kinopoisk_cover);
 
 	const showPlaceholder = $derived(!cover || !imageLoaded || imageError);
+
+	const CATEGORY_MAP: Record<string, string> = {
+		anime_movie: 'Аниме',
+		anime_series: 'Аниме',
+		series: 'Сериал',
+		movie: 'Фильм',
+		show: 'Шоу'
+	};
 </script>
 
-<button type="button" class="group w-full text-left cursor-pointer outline-none" {onclick}>
-	<span class="block relative">
+<button type="button" class="group w-full cursor-pointer text-left outline-none" {onclick}>
+	<span class="relative block">
 		<!-- Placeholder (shown when no cover, loading, or error) -->
 		{#if showPlaceholder}
-			<span class="bg-zinc-900 block rounded-sm pt-[150%] relative w-full">
-				<span class="absolute inset-0 flex justify-center items-center opacity-70">
+			<span class="relative block w-full rounded-sm bg-zinc-900 pt-[150%]">
+				<span class="absolute inset-0 flex items-center justify-center opacity-70">
 					<Image size={24} />
 				</span>
 			</span>
@@ -30,7 +38,7 @@
 		<!-- Image -->
 		{#if cover}
 			<img
-				class="rounded-sm w-full transition-opacity duration-200"
+				class="w-full rounded-sm transition-opacity duration-200"
 				class:opacity-0={!imageLoaded}
 				class:absolute={!imageLoaded}
 				class:inset-0={!imageLoaded}
@@ -43,18 +51,20 @@
 		{/if}
 	</span>
 
-	<span class="font-semibold text-balance block mt-2 group-hover:text-violet-500">
+	<span class="mt-2 block font-semibold text-balance group-hover:text-violet-500">
 		{item.title_ru || item.title_en || item.original_title || item.alt_titles?.[0]}
 	</span>
 
-	<span class="flex gap-2 mt-2 flex-wrap text-xs">
-		<span class="rounded-md px-2 py-1 bg-zinc-900 dark:bg-zinc-900">
-			{item.year}
-		</span>
+	<span class="mt-2 flex flex-wrap gap-2 text-xs">
+		{#if item.year}
+			<span class="rounded-md bg-zinc-900 px-2 py-1 dark:bg-zinc-900">
+				{item.year}
+			</span>
+		{/if}
 
 		{#if item.category}
-			<span class="rounded-md px-2 py-1 bg-zinc-900 dark:bg-zinc-900">
-				{item.category}
+			<span class="rounded-md bg-zinc-900 px-2 py-1 dark:bg-zinc-900">
+				{CATEGORY_MAP[item.category] || item.category}
 			</span>
 		{/if}
 	</span>

@@ -2,7 +2,7 @@
 	import { Image } from '@lucide/svelte';
 
 	interface Props {
-		item: EnrichedMedia;
+		item: Media;
 		onclick: (event: MouseEvent) => void;
 	}
 

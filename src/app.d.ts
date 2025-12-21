@@ -12,8 +12,19 @@ declare global {
 	type SourceKey = 'imdb' | 'kinopoisk' | 'shikimori' | 'tmdb' | 'mydramalist' | 'worldart';
 	type ProviderKey = 'kodik' | 'turbo' | 'flixcdn' | 'lumex';
 
+	interface SearchResponse<T = unknown> {
+		hits: T[];
+		query: string;
+		processingTimeMs: number;
+		limit: number;
+		offset: number;
+		hasMore?: boolean;
+		estimatedTotalHits: number;
+	}
+
 	interface Media {
 		id: number;
+		group_id?: number;
 		category?: string;
 		original_title?: string;
 		provider_title?: string;

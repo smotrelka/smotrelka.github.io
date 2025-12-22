@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { normalizeProvider, PROVIDERS } from '$lib';
 	import { Image } from '@lucide/svelte';
 
 	interface Props {
@@ -11,6 +12,13 @@
 	let imageLoaded = $state(false);
 	let imageError = $state(false);
 
+	const title = $derived(
+		item.provider_title ||
+			item.title_ru ||
+			item.title_en ||
+			item.original_title ||
+			item.alt_titles?.[0]
+	);
 	const cover = $derived(item.mydramalist_cover || item.shikimori_cover || item.kinopoisk_cover);
 
 	const showPlaceholder = $derived(!cover || !imageLoaded || imageError);
@@ -43,7 +51,7 @@
 				class:absolute={!imageLoaded}
 				class:inset-0={!imageLoaded}
 				src={cover}
-				alt={item.title_ru || item.title_en || item.original_title}
+				alt={title}
 				loading="lazy"
 				onload={() => (imageLoaded = true)}
 				onerror={() => (imageError = true)}
@@ -52,18 +60,22 @@
 	</span>
 
 	<span class="mt-2 block font-semibold text-balance group-hover:text-violet-500">
-		{item.title_ru || item.title_en || item.original_title || item.alt_titles?.[0]}
+		{title}
 	</span>
 
 	<span class="mt-2 flex flex-wrap gap-2 text-xs">
+		<span class="rounded-full bg-zinc-800 px-2 py-1">
+			{PROVIDERS[normalizeProvider(item.provider!)!].label || item.provider}
+		</span>
+
 		{#if item.year}
-			<span class="rounded-md bg-zinc-900 px-2 py-1 dark:bg-zinc-900">
+			<span class="rounded-full bg-zinc-800 px-2 py-1">
 				{item.year}
 			</span>
 		{/if}
 
 		{#if item.category}
-			<span class="rounded-md bg-zinc-900 px-2 py-1 dark:bg-zinc-900">
+			<span class="rounded-full bg-zinc-800 px-2 py-1">
 				{CATEGORY_MAP[item.category] || item.category}
 			</span>
 		{/if}

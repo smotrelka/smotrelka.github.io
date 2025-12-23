@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { buildEmbedUrl, normalizeProvider, PROVIDERS } from '$lib';
+	import { ALIASES_KV, buildEmbedUrl, formatFullDateTime, formatTimeAgo } from '$lib';
 	import Player from '$lib/components/Player.svelte';
-	import { ChevronRight } from '@lucide/svelte';
+	import { Calendar, ChevronRight, History, Play, Star, Tag } from '@lucide/svelte';
 	import { slide } from 'svelte/transition';
 
 	let { media }: { media: Media } = $props();
 
 	let isOpen = $state(false);
-	let coverLoadError = $state(false);
+	let coverIndex = $state(0);
+	let coverLoaded = $state(false);
 
-	// Define which IDs we look for
 	const ID_KEYS: ExternalIdKey[] = [
 		'shikimori_id',
 		'mydramalist_id',
@@ -18,15 +18,9 @@
 		'worldart_id'
 	];
 
-	// Get IDs available on this specific media object
 	const availableIds = ID_KEYS.filter((key) => media[key]);
 
-	// VALID placement of $state: at the top level of the component
 	let activeTab = $state<ExternalIdKey | null>(availableIds[0] || null);
-
-	const providerLabel = $derived(
-		PROVIDERS[normalizeProvider(media.provider!)!]?.label || media.provider
-	);
 
 	const embedUrl = $derived(activeTab ? buildEmbedUrl(media, activeTab) : null);
 
@@ -38,48 +32,96 @@
 			media.alt_titles?.[0]
 	);
 
-	const cover = $derived(media.mydramalist_cover || media.shikimori_cover || media.kinopoisk_cover);
+	const covers = $derived(
+		[media.shikimori_cover, media.mydramalist_cover, media.kinopoisk_cover].filter(Boolean)
+	);
+
+	const cover = $derived(covers[coverIndex]);
+
 	const rating = $derived(
 		media.kinopoisk_rating ||
 			media.imdb_rating ||
 			media.shikimori_rating ||
 			media.mydramalist_rating
 	);
+
+	function tryNextCover() {
+		coverLoaded = false;
+
+		if (coverIndex < covers.length - 1) {
+			coverIndex++;
+		}
+	}
 </script>
 
-<div class="relative overflow-hidden">
+<div class="relative overflow-hidden will-change-transform">
 	<button
 		type="button"
 		class="group flex w-full cursor-pointer list-none items-center justify-between overflow-hidden p-4 text-left"
 		onclick={() => (isOpen = !isOpen)}
 	>
-		{#if cover && !coverLoadError}
+		{#if cover}
 			<img
-				class="absolute inset-0 -z-10 h-full w-full object-cover object-center opacity-5 blur-sm group-hover:opacity-10"
+				class={{
+					'absolute inset-0 -z-10 h-full w-full object-cover object-center blur-sm transition-opacity duration-500 ease-in-out': true,
+					'opacity-0': !coverLoaded,
+					'opacity-5 group-hover:opacity-10': coverLoaded
+				}}
 				src={cover}
 				alt={title}
 				loading="lazy"
-				onerror={() => (coverLoadError = true)}
+				onerror={tryNextCover}
+				onload={() => (coverLoaded = true)}
 			/>
 		{/if}
 
 		<span>
 			<span class="block text-sm font-bold text-balance sm:text-lg">{title}</span>
-			<span class="mt-2 flex flex-wrap gap-2 text-xs sm:text-sm">
-				<span class="rounded-md bg-white/10 px-2 py-1 text-zinc-300">{providerLabel}</span>
+			<span class="mt-2 flex flex-wrap gap-4 text-xs text-zinc-300 sm:text-sm">
+				<span class="inline-flex items-center gap-1.5" title="Источник">
+					<Play class="text-purple-600" size={16} />
+					<span>{ALIASES_KV[media.provider as string] || media.provider}</span>
+				</span>
+
+				{#if media.category}
+					<span class="inline-flex items-center gap-1.5" title="Категория">
+						<Tag class="text-rose-600" size={16} />
+						<span>{ALIASES_KV[media.category] || media.category}</span>
+					</span>
+				{/if}
 
 				{#if media.year}
-					<span class="rounded-md bg-white/10 px-2 py-1 text-zinc-300">{media.year}</span>
+					<span class="inline-flex items-center gap-1.5" title="Год производства / выхода">
+						<Calendar size={16} />
+						<span>{media.year}</span>
+					</span>
 				{/if}
 
 				{#if rating}
-					<span class="rounded-md bg-amber-300/10 px-2 py-1 font-bold text-yellow-700"
-						>{rating.toFixed(1)}</span
+					<span
+						class="inline-flex items-center gap-1.5 font-semibold text-yellow-600"
+						title="Рейтинг"
 					>
+						<Star size={16} />
+						<span>{rating.toFixed(1)}</span>
+					</span>
 				{/if}
 
 				{#if media.status}
-					<span class="rounded-md bg-white/10 px-2 py-1 text-zinc-300">{media.status}</span>
+					<span class="rounded-md bg-white/10 px-2 py-1 text-zinc-300" title="Статус"
+						>{ALIASES_KV[media.status] || media.status}</span
+					>
+				{/if}
+
+				{#if media.updated_at}
+					{@const timestamp = media.updated_at * 1000}
+					<span
+						class="hidden items-center gap-1.5 md:inline-flex"
+						title={`Последнее обновление: ${formatFullDateTime(timestamp)}`}
+					>
+						<History size={16} />
+						<span>{formatTimeAgo(timestamp)}</span>
+					</span>
 				{/if}
 			</span>
 		</span>
@@ -93,7 +135,7 @@
 	</button>
 
 	{#if isOpen}
-		<div class="relative space-y-4 p-4" transition:slide>
+		<div class="relative space-y-4 p-4" transition:slide={{ duration: 150 }}>
 			{#if availableIds.length > 1}
 				<div class="flex gap-2 border-b border-zinc-800 pb-2">
 					{#each availableIds as key}
@@ -110,7 +152,7 @@
 			{/if}
 
 			{#if embedUrl}
-				<div style="padding-top: 56.25%; position: relative; background-color: #000;">
+				<div class="relative bg-black" style="padding-top: 56.25%;">
 					<Player {embedUrl} />
 				</div>
 			{:else}

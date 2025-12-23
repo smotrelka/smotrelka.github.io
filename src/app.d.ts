@@ -32,37 +32,38 @@ declare global {
 
 	interface Media {
 		id: number;
-		category?: string;
-		original_title?: string;
-		provider_title?: string;
-		title_en?: string;
-		title_ru?: string;
 		alt_titles?: string[];
-		status?: string;
-		rating_mpaa?: string[];
-		genres?: string[];
-		year?: number;
-		minimal_age?: number;
 		backdrop?: string;
+		category?: string;
+		description?: string;
+		genres?: string[];
 		imdb_id?: text;
 		imdb_rating?: number;
 		imdb_votes?: number;
-		kinopoisk_id?: number;
 		kinopoisk_cover?: string;
+		kinopoisk_id?: number;
 		kinopoisk_rating?: number;
 		kinopoisk_votes?: number;
+		minimal_age?: number;
+		mydramalist_cover?: string;
+		mydramalist_id?: text;
+		mydramalist_rating?: number;
+		mydramalist_votes?: number;
+		original_title?: string;
+		provider_title?: string;
+		provider?: string;
+		rating_mpaa?: string[];
+		shikimori_cover?: string;
 		shikimori_id?: number;
 		shikimori_rating?: number;
 		shikimori_votes?: number;
-		shikimori_cover?: string;
-		mydramalist_cover?: string;
-		mydramalist_rating?: number;
-		mydramalist_votes?: number;
-		worldart_id?: number;
-		provider?: string;
+		status?: string;
+		title_en?: string;
+		title_ru?: string;
 		tmdb_id?: text;
-		mydramalist_id?: text;
-		description?: string;
+		updated_at?: number;
+		worldart_id?: number;
+		year?: number;
 	}
 
 	interface MediaWithClusterId extends Media {

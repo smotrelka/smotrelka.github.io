@@ -15,24 +15,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Set up Node.js
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24
-          cache: 'npm'
+          bun-version: 'latest'
 
-      # 3. Install dependencies
       - name: Install dependencies
-        run: npm ci
+        run: bun ci
 
       - name: Create .env file
         run: |
           echo "PUBLIC_API_BASE_URL=https://smotrelka.org" >> .env
+          echo "PUBLIC_MEILISEARCH_URL=https://search.smotrelka.org" >> .env
+          echo "PUBLIC_MEILISEARCH_KEY=59032bc85b1262be98474ac830b25e36a110bf143add1323176402f8a2a06c19" >> .env
 
       - name: Build SvelteKit
         run: |
-          npm run build
+          bun run build
 
       - name: Deploy to Pages
         uses: peaceiris/actions-gh-pages@v3

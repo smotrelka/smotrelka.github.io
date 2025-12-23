@@ -7,6 +7,24 @@ interface Provider {
 	transform: (id: string, param: string) => string;
 }
 
+export const ALIASES_KV: Record<string, string> = {
+	turbo: 'Turbo',
+	kodik: 'Kodik',
+	lumex: 'Lumex',
+	flixcdn: 'FlixCDN',
+	movie: 'Фильм',
+	series: 'Сериал',
+	anime_movie: 'Аниме-фильм',
+	anime_series: 'Аниме-сериал',
+	cartoon: 'Мультфильм?',
+	cartoon_movie: 'Мультфильм',
+	cartoon_series: 'Мультсериал',
+	show: 'ТВ-Шоу',
+	released: 'Вышел',
+	ongoing: 'Выходит',
+	anons: 'Анонс'
+};
+
 export const PROVIDERS: Record<ProviderKey, Provider> = {
 	turbo: {
 		label: 'Turbo',
@@ -86,4 +104,60 @@ export function getSourceLink(idType: string, id: string | number, category?: st
 		}
 	};
 	return links[idType]?.(id) ?? '#';
+}
+
+export function formatTimeAgo(input: number | string | Date, locale = 'ru') {
+	const targetDate = new Date(input);
+	const now = new Date();
+
+	const diffInSeconds = Math.floor((targetDate.getTime() - now.getTime()) / 1000);
+
+	const units: Array<{
+		unit: Intl.RelativeTimeFormatUnit;
+		seconds: number;
+	}> = [
+		{ unit: 'year', seconds: 31536000 },
+		{ unit: 'month', seconds: 2592000 },
+		{ unit: 'day', seconds: 86400 },
+		{ unit: 'hour', seconds: 3600 },
+		{ unit: 'minute', seconds: 60 },
+		{ unit: 'second', seconds: 1 }
+	];
+
+	for (const { unit, seconds } of units) {
+		if (Math.abs(diffInSeconds) >= seconds || unit === 'second') {
+			const value = Math.round(diffInSeconds / seconds);
+
+			const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+			return rtf.format(value, unit);
+		}
+	}
+}
+
+export function formatFullDateTime(input: number | string | Date, locale = 'ru') {
+	const date = new Date(input);
+
+	const formatter = new Intl.DateTimeFormat(locale, {
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+		day: '2-digit',
+		month: '2-digit',
+		year: 'numeric',
+		hour12: false
+	});
+
+	return formatter.format(date);
+}
+
+export function formatCompactNumber(number: number | string, locale = 'en') {
+	const value = typeof number === 'string' ? parseFloat(number) : number;
+
+	if (isNaN(value)) return '0';
+
+	return new Intl.NumberFormat(locale, {
+		notation: 'compact',
+		compactDisplay: 'short',
+		maximumFractionDigits: 0
+	}).format(value);
 }

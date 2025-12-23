@@ -2,6 +2,15 @@
 
 @layer base {
 	body {
-		@apply scheme-dark font-sans antialiased bg-zinc-950 text-zinc-50 overflow-x-hidden overflow-y-scroll;
+		@apply overflow-x-hidden overflow-y-scroll bg-zinc-950 font-sans text-zinc-50 antialiased scheme-dark;
+	}
+}
+
+@utility hide-scroll-bar {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
 	}
 }

@@ -145,7 +145,7 @@
 				'pointer-events-none opacity-60': isSearching
 			}}
 		>
-			<div class="hide-scroll-bar w-fullgap-2 inline-flex overflow-x-auto px-4 sm:flex-wrap sm:p-0">
+			<div class="hide-scroll-bar inline-flex gap-2 overflow-x-auto px-4 sm:flex-wrap sm:p-0">
 				{#each Object.entries(facets.provider || {}) as [opt, count] (opt)}
 					<label class="inline-flex shrink-0 items-center gap-1 select-none">
 						<input
@@ -175,9 +175,7 @@
 				{/each}
 			</div>
 
-			<div
-				class="hide-scroll-bar inline-flex w-full gap-2 overflow-x-auto px-4 sm:flex-wrap sm:p-0"
-			>
+			<div class="hide-scroll-bar inline-flex gap-2 overflow-x-auto px-4 sm:flex-wrap sm:p-0">
 				{#each Object.entries(facets.category || {}) as [opt, count] (opt)}
 					<label class="inline-flex shrink-0 items-center gap-1 select-none">
 						<input

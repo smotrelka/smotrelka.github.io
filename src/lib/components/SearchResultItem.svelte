@@ -107,11 +107,11 @@
 					</span>
 				{/if}
 
-				{#if media.status}
+				<!-- {#if media.status}
 					<span class="rounded-md bg-white/10 px-2 py-1 text-zinc-300" title="Статус"
 						>{ALIASES_KV[media.status] || media.status}</span
 					>
-				{/if}
+				{/if} -->
 
 				{#if media.updated_at}
 					{@const timestamp = media.updated_at * 1000}

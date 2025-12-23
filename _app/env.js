@@ -1,0 +1,1 @@
+export const env={"PUBLIC_API_BASE_URL":"https://smotrelka.org","PUBLIC_MEILISEARCH_URL":"https://search.smotrelka.org","PUBLIC_MEILISEARCH_KEY":"59032bc85b1262be98474ac830b25e36a110bf143add1323176402f8a2a06c19"}

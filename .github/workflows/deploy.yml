@@ -28,6 +28,8 @@ jobs:
           echo "PUBLIC_API_BASE_URL=https://api.smotrelka.org" >> .env
 
       - name: Build SvelteKit
+        env:
+          BASE_PATH: '/${{ github.event.repository.name }}'
         run: |
           bun run build
           touch build/.nojekyll

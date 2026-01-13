@@ -1,12 +1,8 @@
 @import 'tailwindcss';
 
-@theme {
-	--font-nunito: 'Nunito', Arial, sans-serif;
-}
-
 @layer base {
 	body {
-		@apply font-nunito overflow-x-hidden overflow-y-scroll bg-zinc-950 text-zinc-50 antialiased scheme-dark;
+		@apply overflow-x-hidden overflow-y-scroll bg-zinc-950 text-zinc-50 antialiased scheme-dark;
 	}
 }
 

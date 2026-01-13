@@ -24,7 +24,8 @@ export const ALIASES_KV: Record<string, string> = {
 	show: 'ТВ-Шоу',
 	released: 'Вышел',
 	ongoing: 'Выходит',
-	anons: 'Анонс'
+	anons: 'Анонс',
+	pg_13: 'pg13'
 };
 
 export const PROVIDERS: Record<ProviderKey, Provider> = {

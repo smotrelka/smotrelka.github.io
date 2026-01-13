@@ -15,4 +15,5 @@
 	frameborder="0"
 	allowfullscreen
 	allow="autoplay *; fullscreen *; accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+	tabindex="-1"
 ></iframe>

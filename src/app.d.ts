@@ -29,6 +29,7 @@ declare global {
 		year: number | null;
 		category: string | null;
 		posters: string[];
+		created_at: number;
 		updated_at: number;
 
 		imdb_rating?: number;

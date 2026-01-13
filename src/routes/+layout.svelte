@@ -15,17 +15,10 @@
 	<link rel="icon" type="image/png" sizes="512x512" href="/512.png" />
 	<link rel="shortcut icon" href="/favicon.ico" />
 	<link rel="apple-touch-icon" href="/icon.png" />
-	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="apple-mobile-web-app-title" content="Смотрелка" />
 	<meta name="msapplication-TileColor" content="#6e11b0" />
-
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-	<link
-		href="https://fonts.googleapis.com/css2?family=Nunito:wght@400..700&display=swap"
-		rel="stylesheet"
-	/>
 
 	<script type="text/javascript">
 		(function (m, e, t, r, i, k, a) {

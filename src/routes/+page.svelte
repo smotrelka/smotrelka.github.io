@@ -1,17 +1,14 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { PUBLIC_MEILISEARCH_KEY, PUBLIC_MEILISEARCH_URL } from '$env/static/public';
-	import { ALIASES_KV, formatCompactNumber } from '$lib';
+	import { PUBLIC_API_BASE_URL } from '$env/static/public';
 	import SearchResultItem from '$lib/components/SearchResultItem.svelte';
-	import { Loader, Play, Search, Tag, X } from '@lucide/svelte';
+	import { Loader, Search } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	const RESULTS_LIMIT = 20;
-	const RESULTS_CACHE_KEY = 'search_results_cache';
 
 	let isSearching = $state(false);
 	let searchQuery = $state('');
-	let searchResults: Media[] = $state(getCachedSearchResults());
+	let searchResults = $state<BaseMedia[]>([]);
 	let isLoadingMore = $state(false);
 	let hasMore = $state(false);
 	let offset = $state(0);
@@ -26,35 +23,16 @@
 		year?: Record<string, number>;
 	}>({});
 
-	$effect(() => {
-		if (browser) {
-			localStorage.setItem(RESULTS_CACHE_KEY, JSON.stringify($state.snapshot(searchResults)));
-		}
-	});
-
 	let controller: AbortController | null = $state(null);
 
 	async function fetchResults(currentOffset: number, append = false): Promise<void> {
-		const filters: string[] = [
-			'(imdb_id EXISTS OR kinopoisk_id EXISTS OR shikimori_id EXISTS OR mydramalist_id EXISTS)'
-		];
+		const url = new URL(`${PUBLIC_API_BASE_URL}/api/search`);
 
-		if (provider.length) filters.push(`provider = "${provider}"`);
-		if (category.length) filters.push(`category = "${category}"`);
+		url.searchParams.set('q', searchQuery);
+		url.searchParams.set('limit', String(RESULTS_LIMIT));
+		url.searchParams.set('offset', String(currentOffset));
 
-		const response = await fetch(`${PUBLIC_MEILISEARCH_URL}/indexes/media/search`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${PUBLIC_MEILISEARCH_KEY}`
-			},
-			body: JSON.stringify({
-				q: searchQuery,
-				limit: RESULTS_LIMIT,
-				offset: currentOffset,
-				filter: filters.join(' AND '),
-				facets: ['provider', 'category']
-			}),
+		const response = await fetch(url, {
 			signal: controller?.signal
 		});
 
@@ -62,14 +40,14 @@
 			throw new Error(`Search failed: ${response.statusText}`);
 		}
 
-		const data = await response.json();
+		const json = (await response.json()) as SearchResponse<BaseMedia>;
 
-		if (!append) {
-			facets = data.facetDistribution ?? {};
-		}
+		// if (!append) {
+		// 	facets = data.facetDistribution ?? {};
+		// }
 
-		searchResults = append ? [...searchResults, ...(data.hits ?? [])] : (data.hits ?? []);
-		hasMore = (data.hits?.length ?? 0) >= RESULTS_LIMIT;
+		searchResults = append ? [...searchResults, ...(json.media ?? [])] : (json.media ?? []);
+		hasMore = (json.media?.length ?? 0) >= RESULTS_LIMIT;
 		offset = currentOffset;
 	}
 
@@ -105,26 +83,28 @@
 		}
 	}
 
-	function getCachedSearchResults(): Media[] {
-		if (browser) {
-			const cached = localStorage.getItem(RESULTS_CACHE_KEY);
-			return cached ? JSON.parse(cached) : [];
-		}
-
-		return [];
-	}
-
 	onMount(() => {
 		handleSearch();
 	});
 </script>
 
 <main class="mx-auto w-full max-w-6xl sm:space-y-6 sm:p-9">
+	<!-- {#if pinnedMedia.length > 0}
+		<div
+			class="mb-6 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50"
+			transition:fade
+		>
+			{#each pinnedMedia as media (media.id)}
+				<SearchResultItem {media} />
+			{/each}
+		</div>
+	{/if} -->
+
 	<div class="space-y-4 py-4 sm:p-0">
 		<div class="px-4 sm:p-0">
 			<div class="relative">
 				<input
-					class="peer w-full rounded-lg border border-zinc-800 py-3 pr-3 pl-10 hover:border-zinc-700"
+					class="peer w-full border border-zinc-900 bg-zinc-900 py-3 pr-3 pl-10 focus-within:bg-zinc-950 hover:border-zinc-700 focus:border-violet-800 focus:outline-2 focus:outline-violet-500"
 					type="text"
 					placeholder="поиск фильмов и сериалов&mldr;"
 					oninput={handleSearch}
@@ -139,7 +119,7 @@
 			</div>
 		</div>
 
-		<div
+		<!-- <div
 			class={{
 				'flex w-full flex-wrap justify-between gap-x-6 gap-y-4 text-sm whitespace-nowrap contain-paint': true,
 				'pointer-events-none opacity-60': isSearching
@@ -204,25 +184,23 @@
 					</label>
 				{/each}
 			</div>
-		</div>
+		</div> -->
 	</div>
 
-	<div class="divide-y divide-zinc-900 border-y border-zinc-900 sm:rounded-lg sm:border">
-		{#if searchResults.length === 0 && searchQuery.trim() !== ''}
-			<p class="p-4">Ничего не найдено.</p>
-		{:else}
+	{#if searchResults.length}
+		<div class="divide-y divide-zinc-900 border-y border-zinc-900 sm:border">
 			{#each searchResults as media (media.id)}
 				<SearchResultItem {media} />
 			{/each}
-		{/if}
-	</div>
+		</div>
+	{/if}
 
 	{#if hasMore && !isSearching && searchResults.length > 0}
 		<div class="flex justify-center p-4 sm:p-0">
 			<button
 				onclick={loadMore}
 				disabled={isLoadingMore}
-				class="relative cursor-pointer rounded-lg border border-zinc-800 bg-zinc-900 px-6 py-3 transition-transform hover:bg-zinc-800 active:scale-95 disabled:opacity-50"
+				class="relative cursor-pointer border border-zinc-800 bg-zinc-900 px-6 py-3 transition-transform hover:bg-zinc-800 active:scale-95 disabled:opacity-50"
 			>
 				<span class:opacity-0={isLoadingMore}>Загрузить ещё</span>
 

@@ -1,3 +1,5 @@
+import { browser } from '$app/environment';
+
 interface Provider {
 	label: string;
 	priority: number;
@@ -63,25 +65,26 @@ export function normalizeProvider(provider: string): ProviderKey | null {
 	return baseProvider in PROVIDERS ? (baseProvider as ProviderKey) : null;
 }
 
-export function buildEmbedUrl(media: Media, forcedIdType?: ExternalIdKey): string | null {
-	if (!media?.provider) return null;
-
-	const providerKey = normalizeProvider(media.provider);
-	if (!providerKey) return null;
+export function buildEmbedUrl(
+	media: FullMedia,
+	providerKey: ProviderKey,
+	forcedIdType?: ExternalIdKey
+): string | null {
+	if (!media?.providers) return null;
 
 	const provider = PROVIDERS[providerKey];
 	if (!provider) return null;
 
 	// 1. If a specific tab is selected, try to build that URL immediately
-	if (forcedIdType && media[forcedIdType]) {
+	if (forcedIdType && media.providers[providerKey][forcedIdType]) {
 		const param = provider.params[forcedIdType];
-		if (param) return provider.transform(String(media[forcedIdType]), param);
+		if (param) return provider.transform(String(media.providers[providerKey][forcedIdType]), param);
 	}
 
 	// 2. Otherwise, fallback to the first supported ID based on media data
 	// We iterate through PROVIDER_MAP (the order you want to prioritize IDs)
 	for (const key of Object.keys(provider.params) as ExternalIdKey[]) {
-		const idValue = media[key];
+		const idValue = media.providers[providerKey][key];
 		if (idValue) {
 			return provider.transform(String(idValue), provider.params[key]!);
 		}
@@ -160,4 +163,23 @@ export function formatCompactNumber(number: number | string, locale = 'en') {
 		compactDisplay: 'short',
 		maximumFractionDigits: 0
 	}).format(value);
+}
+
+export function loadLocalStorage<T>(key: string, defaultValue?: T): T | null {
+	if (browser) {
+		const item = localStorage.getItem(key);
+
+		if (!item) {
+			return defaultValue || null;
+		}
+
+		try {
+			return item ? JSON.parse(item) : defaultValue || null;
+		} catch (error) {
+			console.error(error);
+			return null;
+		}
+	}
+
+	return null;
 }

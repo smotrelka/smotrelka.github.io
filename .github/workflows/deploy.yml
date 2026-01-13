@@ -25,9 +25,7 @@ jobs:
 
       - name: Create .env file
         run: |
-          echo "PUBLIC_API_BASE_URL=https://smotrelka.org" >> .env
-          echo "PUBLIC_MEILISEARCH_URL=https://search.smotrelka.org" >> .env
-          echo "PUBLIC_MEILISEARCH_KEY=59032bc85b1262be98474ac830b25e36a110bf143add1323176402f8a2a06c19" >> .env
+          echo "PUBLIC_API_BASE_URL=https://api.smotrelka.org" >> .env
 
       - name: Build SvelteKit
         run: |

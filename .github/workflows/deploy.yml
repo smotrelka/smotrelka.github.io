@@ -30,13 +30,14 @@ jobs:
       - name: Build SvelteKit
         run: |
           bun run build
+          touch build/.nojekyll
 
       - name: Deploy to Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: build
-          publish_branch: production
+          publish_branch: gh-pages
           force_orphan: true
 
       - name: Deploy to Firebase Hosting

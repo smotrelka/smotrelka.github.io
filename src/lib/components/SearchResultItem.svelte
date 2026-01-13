@@ -229,7 +229,7 @@
 				}}
 			>
 				{#if isLoading}
-					<Loader size={16} />
+					<Loader size={16} class="animate-spin" />
 				{:else}
 					<ChevronDown size={16} class={{ 'rotate-180': isExpanded }} />
 				{/if}
@@ -239,9 +239,8 @@
 
 	{#if isExpanded}
 		<div class="relative" transition:slide={{ duration: 150 }}>
-			{#if showDetails}
-				<div class="flex justify-between gap-3 space-y-4 p-4 pt-0">
-					<!-- {#if availableIds.length > 1}
+			<div class="flex justify-between gap-3 space-y-4 p-4 pt-0">
+				<!-- {#if availableIds.length > 1}
 				<div class="flex gap-2">
 					{#each availableIds as key}
 						<button
@@ -256,7 +255,7 @@
 				</div>
 			{/if} -->
 
-					<!-- <div class="flex gap-2">
+				<!-- <div class="flex gap-2">
 				<button
 					type="button"
 					class="rounded-full p-2 transition-colors hover:bg-white/10 active:scale-90"
@@ -268,105 +267,102 @@
 					<Pin size={20} fill={isPinned ? 'currentColor' : 'none'} />
 				</button>
 			</div> -->
-					<div class="w-full space-y-3">
-						<div class="flex flex-wrap justify-between gap-x-6 gap-y-3">
-							<div class="flex flex-wrap gap-2 text-xs">
+				<div class="w-full space-y-3">
+					<div class="flex flex-wrap justify-between gap-x-6 gap-y-3">
+						<div class="flex flex-wrap gap-2 text-xs">
+							<span
+								class="inline-flex items-center gap-1.5 border border-zinc-900 p-2"
+								title={formatFullDateTime(media.created_at)}
+							>
+								<ClockPlus size={14} />
+
+								<span
+									>Добавлено: <span class="font-semibold">{formatTimeAgo(media.created_at)}</span
+									></span
+								>
+							</span>
+
+							<span
+								class="inline-flex items-center gap-1.5 border border-zinc-900 p-2"
+								title={formatFullDateTime(media.updated_at)}
+							>
+								<History size={14} />
+
+								<span
+									>Обновлено: <span class="font-semibold">{formatTimeAgo(media.updated_at)}</span
+									></span
+								>
+							</span>
+
+							{#if fullMedia?.next_episode_at}
 								<span
 									class="inline-flex items-center gap-1.5 border border-zinc-900 p-2"
-									title={formatFullDateTime(media.created_at)}
+									title={formatFullDateTime(fullMedia.next_episode_at)}
 								>
-									<ClockPlus size={14} />
-
+									<CalendarClock size={14} />
 									<span
-										>Добавлено: <span class="font-semibold">{formatTimeAgo(media.created_at)}</span
+										>Следующий эпизод: <span class="font-semibold"
+											>{formatTimeAgo(fullMedia.next_episode_at)}</span
 										></span
 									>
 								</span>
+							{/if}
 
+							{#if fullMedia?.rating_mpaa || fullMedia?.minimal_age}
 								<span
-									class="inline-flex items-center gap-1.5 border border-zinc-900 p-2"
-									title={formatFullDateTime(media.updated_at)}
+									class="inline-flex items-center gap-1.5 border border-zinc-900 p-2 uppercase"
+									class:text-red-400={fullMedia &&
+										(fullMedia.rating_mpaa?.toLowerCase().startsWith('r') ||
+											(fullMedia.minimal_age && fullMedia.minimal_age >= 18))}
+									title="Возрастное ограничение"
 								>
-									<History size={14} />
+									<CircleAlert size={14} />
 
-									<span
-										>Обновлено: <span class="font-semibold">{formatTimeAgo(media.updated_at)}</span
-										></span
-									>
-								</span>
-
-								{#if fullMedia?.next_episode_at}
-									<span
-										class="inline-flex items-center gap-1.5 border border-zinc-900 p-2"
-										title={formatFullDateTime(fullMedia.next_episode_at)}
-									>
-										<CalendarClock size={14} />
+									{#if fullMedia?.rating_mpaa && fullMedia?.minimal_age}
 										<span
-											>Следующий эпизод: <span class="font-semibold"
-												>{formatTimeAgo(fullMedia.next_episode_at)}</span
-											></span
+											>{ALIASES_KV[fullMedia.rating_mpaa] || fullMedia.rating_mpaa} ({fullMedia.minimal_age}+)</span
 										>
-									</span>
-								{/if}
-
-								{#if fullMedia?.rating_mpaa || fullMedia?.minimal_age}
-									<span
-										class="inline-flex items-center gap-1.5 border border-zinc-900 p-2 uppercase"
-										class:text-red-400={fullMedia &&
-											(fullMedia.rating_mpaa?.toLowerCase().startsWith('r') ||
-												(fullMedia.minimal_age && fullMedia.minimal_age >= 18))}
-										title="Возрастное ограничение"
-									>
-										<CircleAlert size={14} />
-
-										{#if fullMedia?.rating_mpaa && fullMedia?.minimal_age}
-											<span
-												>{ALIASES_KV[fullMedia.rating_mpaa] || fullMedia.rating_mpaa} ({fullMedia.minimal_age}+)</span
-											>
-										{:else if fullMedia.rating_mpaa}
-											<span>{ALIASES_KV[fullMedia.rating_mpaa] || fullMedia.rating_mpaa}</span>
-										{:else}
-											<span>{fullMedia.minimal_age}+</span>
-										{/if}
-									</span>
-								{/if}
-							</div>
-
-							<div class="flex flex-wrap gap-2">
-								{#if fullMedia?.countries?.length}
-									<div class="flex flex-wrap gap-2 text-xs">
-										{#each fullMedia.countries as i (i)}
-											<span class="bg-zinc-900 p-2">{i}</span>
-										{/each}
-									</div>
-								{/if}
-
-								{#if fullMedia?.genres?.length}
-									<div class="flex flex-wrap gap-2 text-xs">
-										{#each fullMedia.genres as i (i)}
-											<span class="border border-zinc-900 p-2">{i}</span>
-										{/each}
-									</div>
-								{/if}
-							</div>
+									{:else if fullMedia.rating_mpaa}
+										<span>{ALIASES_KV[fullMedia.rating_mpaa] || fullMedia.rating_mpaa}</span>
+									{:else}
+										<span>{fullMedia.minimal_age}+</span>
+									{/if}
+								</span>
+							{/if}
 						</div>
 
-						{#if fullMedia?.description}
-							<div class="text-sm text-pretty opacity-70 transition-opacity hover:opacity-100">
-								{fullMedia.description}
-							</div>
-						{/if}
+						<div class="flex flex-wrap gap-2">
+							{#if fullMedia?.countries?.length}
+								<div class="flex flex-wrap gap-2 text-xs">
+									{#each fullMedia.countries as i (i)}
+										<span class="bg-zinc-900 p-2">{i}</span>
+									{/each}
+								</div>
+							{/if}
 
-						{#if fullMedia?.tagline}
-							<div
-								class="text-sm text-pretty italic opacity-70 transition-opacity hover:opacity-100"
-							>
-								&mdash; {fullMedia.tagline}
-							</div>
-						{/if}
+							{#if fullMedia?.genres?.length}
+								<div class="flex flex-wrap gap-2 text-xs">
+									{#each fullMedia.genres as i (i)}
+										<span class="border border-zinc-900 p-2">{i}</span>
+									{/each}
+								</div>
+							{/if}
+						</div>
 					</div>
+
+					{#if fullMedia?.description}
+						<div class="text-sm text-pretty opacity-70 transition-opacity hover:opacity-100">
+							{fullMedia.description}
+						</div>
+					{/if}
+
+					{#if fullMedia?.tagline}
+						<div class="text-sm text-pretty italic opacity-70 transition-opacity hover:opacity-100">
+							&mdash; {fullMedia.tagline}
+						</div>
+					{/if}
 				</div>
-			{/if}
+			</div>
 
 			{#if showProviderAccordions}
 				<div class="divide-y divide-zinc-900">

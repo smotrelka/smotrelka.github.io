@@ -3,13 +3,8 @@
 	import { ALIASES_KV, formatFullDateTime, formatTimeAgo } from '$lib';
 	import Player from '$lib/components/Player.svelte';
 	import {
-		AlertCircle,
-		AlertOctagon,
-		AlertTriangle,
-		ArrowBigRightDash,
 		Calendar,
 		CalendarClock,
-		Check,
 		ChevronDown,
 		CircleAlert,
 		ClockPlus,
@@ -17,8 +12,6 @@
 		EyeOff,
 		History,
 		Loader,
-		OctagonAlert,
-		Sparkle,
 		Tag
 	} from '@lucide/svelte';
 	import { slide } from 'svelte/transition';
@@ -60,10 +53,6 @@
 				};
 			})
 			.filter((group) => group.items.length > 0)
-	);
-
-	const showDetails = $derived(
-		fullMedia && (fullMedia.genres?.length || fullMedia?.description?.length)
 	);
 
 	const showProviderAccordions = $derived(
@@ -146,7 +135,7 @@
 			<span class="grow">
 				<span
 					class="block text-sm font-bold text-balance group-hover:text-violet-400 sm:text-lg"
-					class:text-violet-400={isExpanded}>{media.best_match_title || media.title}</span
+					class:text-violet-400={isExpanded}>{media.title}</span
 				>
 
 				<span class="mt-1 block text-xs text-balance opacity-70 sm:text-sm">{media.subtitle}</span>
@@ -372,7 +361,7 @@
 							name={`providers-${media.id}`}
 							ontoggle={(e) => {
 								const details = e.target as HTMLDetailsElement;
-								if (details.open && group.items.length === 1) {
+								if (details.open) {
 									embedUrl = group.items[0].url;
 								}
 							}}
